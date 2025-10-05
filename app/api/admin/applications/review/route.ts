@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const db = await getDatabase()
 
     // Verify application exists and is pending
-    const application = await db.collection("applications").findOne({
+    const application = await db.collection("courseRequests").findOne({
       _id: new ObjectId(applicationId),
       status: "pending",
     })
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       updateData.reviewNote = note
     }
 
-    await db.collection("applications").updateOne({ _id: new ObjectId(applicationId) }, { $set: updateData })
+    await db.collection("courseRequests").updateOne({ _id: new ObjectId(applicationId) }, { $set: updateData })
 
     return NextResponse.json({ message: `Application ${action}d successfully` }, { status: 200 })
   } catch (error) {

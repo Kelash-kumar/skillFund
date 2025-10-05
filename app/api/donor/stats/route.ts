@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
         .toArray(),
       db.collection("donations").distinct("applicationId", { donorId, status: "completed" }),
       db
-        .collection("applications")
+        .collection("courseRequests")
         .aggregate([
           {
             $lookup: {

@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     // Get approved applications with student and course information
     const applications = await db
-      .collection("applications")
+      .collection("courseRequests")
       .aggregate([
         {
           $match: { status: "approved" },

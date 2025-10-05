@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     // Get all applications with student and course information
     const applications = await db
-      .collection("applications")
+      .collection("courseRequests")
       .aggregate([
         {
           $lookup: {
@@ -77,6 +77,7 @@ export async function GET(request: NextRequest) {
       ])
       .toArray()
 
+      console.log("applications : ",applications);
     return NextResponse.json(applications)
   } catch (error) {
     console.error("Error fetching applications for admin:", error)

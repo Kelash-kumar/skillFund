@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const db = await getDatabase()
 
     // Verify application exists and is approved
-    const application = await db.collection("applications").findOne({
+    const application = await db.collection("courseRequests").findOne({
       _id: new ObjectId(applicationId),
       status: "approved",
     })
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     // Check if application is now fully funded
     const newTotalFunded = currentFunded + amount
     if (newTotalFunded >= application.amount) {
-      await db.collection("applications").updateOne(
+      await db.collection("courseRequests").updateOne(
         { _id: new ObjectId(applicationId) },
         {
           $set: {

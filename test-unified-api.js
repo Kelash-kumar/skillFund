@@ -13,7 +13,7 @@ async function testUnifiedAPI() {
     
     // Test the same aggregation logic as our API
     const applications = await db
-      .collection("applications")
+      .collection("courseRequests")
       .aggregate([
         // Match all applications regardless of type
         { $match: {} },

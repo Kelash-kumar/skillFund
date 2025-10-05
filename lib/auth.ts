@@ -27,7 +27,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         const db = await getDatabase()
-        console.log("email :",credentials.email);
+        console.log("email :",credentials.email,credentials.password);
         const user = await db.collection("users").findOne({
           email: credentials.email,
         })

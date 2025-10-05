@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     // Get all applications from the unified collection based on your actual schema
     // This collection contains all types: available-course, new-course, certification
     const applications = await db
-      .collection("applications")
+      .collection("courseRequests")
       .aggregate([
         // Match all applications regardless of type
         { $match: {} },
@@ -144,6 +144,8 @@ export async function GET(request: NextRequest) {
       ])
       .toArray()
 
+
+      console.log("unified applications ",applications);
     return NextResponse.json(applications)
   } catch (error) {
     console.error("Error fetching unified applications for admin:", error)

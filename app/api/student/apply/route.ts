@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if student already has a pending/approved application for this course
-    const existingApplication = await db.collection("applications").findOne({
+    const existingApplication = await db.collection("courseRequests").findOne({
       studentId: new ObjectId(session.user.id),
       courseId: new ObjectId(courseId),
       status: { $in: ["pending", "approved", "funded"] },
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     }
 
-    const result = await db.collection("applications").insertOne(application)
+    const result = await db.collection("courseRequests").insertOne(application)
 
     return NextResponse.json(
       { message: "Application submitted successfully", applicationId: result.insertedId },

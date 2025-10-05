@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     // Get fund applications for the current student
     const fundApplications = await db
-      .collection("applications")
+      .collection("courseRequests")
       .aggregate([
         {
           $match: { studentId: new ObjectId(session.user.id) },

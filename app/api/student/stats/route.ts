@@ -17,10 +17,10 @@ export async function GET(request: NextRequest) {
 
     // Get application statistics
     const [totalApplications, approvedApplications, fundingStats] = await Promise.all([
-      db.collection("applications").countDocuments({ studentId }),
-      db.collection("applications").countDocuments({ studentId, status: "approved" }),
+      db.collection("courseRequests").countDocuments({ studentId }),
+      db.collection("courseRequests").countDocuments({ studentId, status: "approved" }),
       db
-        .collection("applications")
+        .collection("courseRequests")
         .aggregate([
           { $match: { studentId, status: "funded" } },
           { $group: { _id: null, totalFunding: { $sum: "$fundedAmount" } } },
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const totalFunding = fundingStats.length > 0 ? fundingStats[0].totalFunding : 0
 
     // For now, completed courses is same as funded applications
-    const completedCourses = await db.collection("applications").countDocuments({ studentId, status: "funded" })
+    const completedCourses = await db.collection("courseRequests").countDocuments({ studentId, status: "funded" })
 
     return NextResponse.json({
       totalApplications,

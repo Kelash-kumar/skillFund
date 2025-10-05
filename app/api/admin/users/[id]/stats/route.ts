@@ -37,7 +37,7 @@ export async function GET(
     if (user.userType === "student") {
       // Get student-specific statistics
       const [applications, totalFundingResult] = await Promise.all([
-        db.collection("applications").countDocuments({ studentId: userId }),
+        db.collection("courseRequests").countDocuments({ studentId: userId }),
         db.collection("donations").aggregate([
           { $match: { studentId: userId, status: "completed" } },
           { $group: { _id: null, totalFunded: { $sum: "$amount" } } }
@@ -48,9 +48,9 @@ export async function GET(
 
       // Get application status breakdown
       const [pendingApps, approvedApps, rejectedApps] = await Promise.all([
-        db.collection("applications").countDocuments({ studentId: userId, status: "pending" }),
-        db.collection("applications").countDocuments({ studentId: userId, status: "approved" }),
-        db.collection("applications").countDocuments({ studentId: userId, status: "rejected" })
+        db.collection("courseRequests").countDocuments({ studentId: userId, status: "pending" }),
+        db.collection("courseRequests").countDocuments({ studentId: userId, status: "approved" }),
+        db.collection("courseRequests").countDocuments({ studentId: userId, status: "rejected" })
       ])
 
       stats = {
@@ -86,7 +86,7 @@ export async function GET(
     } else if (user.userType === "admin") {
       // Get admin activity statistics
       const [reviewedApps, reviewedCourses] = await Promise.all([
-        db.collection("applications").countDocuments({ reviewedBy: userId }),
+        db.collection("courseRequests").countDocuments({ reviewedBy: userId }),
         db.collection("courseRequests").countDocuments({ reviewedBy: userId })
       ])
 

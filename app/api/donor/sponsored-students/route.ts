@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
         },
         {
           $lookup: {
-            from: "applications",
+            from: "courseRequests",
             localField: "applicationId",
             foreignField: "_id",
             as: "application",

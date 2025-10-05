@@ -133,9 +133,9 @@ export default function StudentDashboard() {
             >
               My Applications
             </Link>
-            <Link href="/student/profile" className="text-foreground-muted hover:text-foreground transition-colors">
-              Profile
-            </Link>
+        <Link href="/student/profile" className="text-foreground-muted hover:text-foreground transition-colors">
+          View Profile
+        </Link>
           </nav>
           <div className="flex items-center space-x-3">
             <span className="text-sm text-foreground-muted">Welcome, {session?.user?.name}</span>

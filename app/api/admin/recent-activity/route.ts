@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     // Get recent applications
     const recentApplications = await db
-      .collection("applications")
+      .collection("courseRequests")
       .aggregate([
         {
           $lookup: {
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
         },
         {
           $lookup: {
-            from: "applications",
+            from: "courseRequests",
             localField: "applicationId",
             foreignField: "_id",
             as: "application",

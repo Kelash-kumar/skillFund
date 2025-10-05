@@ -264,7 +264,7 @@ export default function CoursesPage() {
                 <p className="text-foreground-muted">Request a new course to be added to our platform</p>
               </div>
               <Link href="/student/request-course">
-                <Button className="bg-secondary hover:bg-secondary-hover">
+                <Button className="bg-green-500 hover:bg-secondary-hover">
                   <Plus className="h-4 w-4 mr-2" />
                   Request Course
                 </Button>
@@ -298,7 +298,7 @@ export default function CoursesPage() {
                     </Badge>
                     <div className="flex items-center text-primary font-semibold">
                       <DollarSign className="h-4 w-4" />
-                      {course.price === 0 ? "Free" : course.price.toLocaleString()}
+                      {course.price === 0 ? "Free" : course?.price?.toLocaleString()}
                     </div>
                   </div>
                   <CardTitle className="text-lg text-foreground line-clamp-2">{course.title}</CardTitle>

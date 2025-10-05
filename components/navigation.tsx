@@ -17,14 +17,13 @@ const studentNavItems = [
 
 const donorNavItems = [
   { href: "/donor/dashboard", label: "Dashboard", icon: Home },
-  { href: "/donor/students", label: "Browse Students", icon: Users },
   { href: "/payment", label: "Make Donation", icon: CreditCard },
   { href: "/profile", label: "Profile", icon: User },
 ]
 
 const adminNavItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: Home },
-  { href: "/admin/applications", label: "Applications", icon: BookOpen },
+  { href: "/admin/applications", label: "courseRequests", icon: BookOpen },
   { href: "/admin/courses", label: "Courses", icon: BookOpen },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/profile", label: "Profile", icon: User },

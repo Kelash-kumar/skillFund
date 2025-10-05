@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     // Get applications for the current student
     const applications = await db
-      .collection("applications")
+      .collection("courseRequests")
       .aggregate([
         {
           $match: { studentId: new ObjectId(session.user.id) },

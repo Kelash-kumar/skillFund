@@ -25,7 +25,7 @@ export async function DELETE(
     const db = await getDatabase()
 
     // Check if it's a fund application or course request
-    let application = await db.collection("applications").findOne({
+    let application = await db.collection("courseRequests").findOne({
       _id: new ObjectId(id),
       studentId: new ObjectId(session.user.id)
     })
@@ -71,7 +71,7 @@ export async function DELETE(
     }
 
     // Delete the application from the appropriate collection
-    const collection = isFromCourseRequests ? "courseRequests" : "applications"
+    const collection = isFromCourseRequests ? "courseRequests" : "courseRequests"
     const deleteResult = await db.collection(collection).deleteOne({
       _id: new ObjectId(id),
       studentId: new ObjectId(session.user.id)

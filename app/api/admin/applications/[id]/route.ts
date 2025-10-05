@@ -22,7 +22,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     // Get single application with unified support for all request types
     const applications = await db
-      .collection("applications")
+      .collection("courseRequests")
       .aggregate([
         {
           $match: { _id: new ObjectId(id) }

@@ -18,7 +18,7 @@ async function seedComprehensiveData() {
     console.log("Clearing existing data...")
     await Promise.all([
       db.collection("users").deleteMany({}),
-      db.collection("applications").deleteMany({}),
+      db.collection("courseRequests").deleteMany({}),
       db.collection("donations").deleteMany({}),
       db.collection("payments").deleteMany({}),
       db.collection("courseRequests").deleteMany({})
@@ -38,24 +38,6 @@ async function seedComprehensiveData() {
         userType: "admin",
         createdAt: new Date("2024-01-15"),
         updatedAt: new Date("2024-01-15")
-      },
-      {
-        _id: new ObjectId(),
-        name: "Super Admin",
-        email: "superadmin@scholarfund.com",
-        password: hashedPassword,
-        userType: "admin",
-        createdAt: new Date("2024-01-10"),
-        updatedAt: new Date("2024-01-10")
-      },
-      {
-        _id: new ObjectId(),
-        name: "Your Name", // Replace with your actual name
-        email: "your.email@scholarfund.com", // Replace with your email
-        password: hashedPassword,
-        userType: "admin",
-        createdAt: new Date("2024-01-05"),
-        updatedAt: new Date("2024-01-05")
       },
       
       // Student users
@@ -303,7 +285,7 @@ async function seedComprehensiveData() {
       }
     ]
     
-    await db.collection("applications").insertMany(applications)
+    await db.collection("courseRequests").insertMany(applications)
     console.log(`Inserted ${applications.length} applications`)
     
     // Create donations and payments

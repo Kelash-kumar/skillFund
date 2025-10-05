@@ -27,7 +27,7 @@ export async function GET(
     const db = await getDatabase()
     
     const application = await db
-      .collection("applications")
+      .collection("courseRequests")
       .findOne({ _id: new ObjectId(id) })
 
     if (!application) {

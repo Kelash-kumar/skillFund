@@ -9,7 +9,7 @@ export async function GET() {
     
     // Get all applications with the new unified structure
     const applications = await db
-      .collection("applications")
+      .collection("courseRequests")
       .aggregate([
         { $match: {} },
         {

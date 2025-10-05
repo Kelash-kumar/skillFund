@@ -28,9 +28,9 @@ export async function GET(request: NextRequest) {
       db.collection("users").countDocuments(),
       db.collection("users").countDocuments({ userType: "student" }),
       db.collection("users").countDocuments({ userType: "donor" }),
-      db.collection("applications").countDocuments(),
-      db.collection("applications").countDocuments({ status: "pending" }),
-      db.collection("applications").countDocuments({ status: "approved" }),
+      db.collection("courseRequests").countDocuments(),
+      db.collection("courseRequests").countDocuments({ status: "pending" }),
+      db.collection("courseRequests").countDocuments({ status: "approved" }),
       db
         .collection("donations")
         .aggregate([{ $match: { status: "completed" } }, { $group: { _id: null, totalFunding: { $sum: "$amount" } } }])

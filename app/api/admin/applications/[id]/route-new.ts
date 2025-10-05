@@ -22,7 +22,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     // Get application with the new unified structure that includes requestType
     const applications = await db
-      .collection("applications")
+      .collection("courseRequests")
       .aggregate([
         {
           $match: { _id: new ObjectId(id) },

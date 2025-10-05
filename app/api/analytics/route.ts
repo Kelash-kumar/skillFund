@@ -63,15 +63,15 @@ export async function GET(request: NextRequest) {
         : 100
 
     // Get application statistics
-    const activeApplications = await db.collection("applications").countDocuments({
+    const activeApplications = await db.collection("courseRequests").countDocuments({
       status: { $in: ["pending", "under_review"] },
     })
 
-    const totalApplications = await db.collection("applications").countDocuments({
+    const totalApplications = await db.collection("courseRequests").countDocuments({
       createdAt: { $gte: startDate },
     })
 
-    const approvedApplications = await db.collection("applications").countDocuments({
+    const approvedApplications = await db.collection("courseRequests").countDocuments({
       createdAt: { $gte: startDate },
       status: "approved",
     })

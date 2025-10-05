@@ -2,7 +2,7 @@
 const { MongoClient, ObjectId } = require("mongodb")
 const bcrypt = require("bcryptjs")
 
-const uri = process.env.MONGODB_URI || "mongodb+srv://jawadsoomro:JawadsPassword123@cluster0.jlqp0dn.mongodb.net/"
+const uri = process.env.MONGODB_URI || "mongodb+srv://kelashraisal_db_user:IDXX84Pd5ib19j1R@cluster0.7umhbjx.mongodb.net/"
 const dbName = "scholarfund"
 
 async function seedAdminUsers() {
@@ -28,34 +28,6 @@ async function seedAdminUsers() {
         createdAt: new Date(),
         updatedAt: new Date()
       },
-      {
-        _id: new ObjectId(),
-        name: "Platform Manager",
-        email: "manager@scholarfund.com", 
-        password: hashedPassword,
-        userType: "admin",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        _id: new ObjectId(),
-        name: "Operations Admin",
-        email: "operations@scholarfund.com",
-        password: hashedPassword,
-        userType: "admin",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      // Add your personal admin account here
-      {
-        _id: new ObjectId(),
-        name: "Your Name Here", // Replace with your name
-        email: "yourname@scholarfund.com", // Replace with your email
-        password: hashedPassword,
-        userType: "admin",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
     ]
     
     // Check if admin users already exist
