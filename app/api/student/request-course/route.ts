@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { getDatabase } from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
+import FileUploadManager from "@/lib/fileUpload"
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,37 +14,63 @@ export async function POST(request: NextRequest) {
     }
 
     const formData = await request.formData()
+    const requestType = (formData.get("requestType") as string) || "new-course"
 
-    // Extract form fields
-    const courseData = {
-      title: formData.get("title") as string,
-      provider: formData.get("provider") as string,
-      description: formData.get("description") as string,
-      category: formData.get("category") as string,
-      price: Number(formData.get("price")),
-      duration: formData.get("duration") as string,
-      certificationType: formData.get("certificationType") as string,
-      url: formData.get("url") as string,
-      justification: formData.get("justification") as string,
-      careerRelevance: formData.get("careerRelevance") as string,
-      timeline: formData.get("timeline") as string,
-      additionalInfo: (formData.get("additionalInfo") as string) || "",
+    let courseData: any = {
+      // Common fields
+      reason: formData.get("reason") as string,
+      careerGoals: formData.get("careerGoals") as string,
+      previousExperience: formData.get("previousExperience") as string,
+      expectedOutcome: formData.get("expectedOutcome") as string,
+      urgency: formData.get("urgency") as string,
     }
 
-    // Validate required fields
-    const requiredFields = [
-      "title",
-      "provider",
-      "description",
-      "category",
-      "price",
-      "duration",
-      "certificationType",
-      "url",
-      "justification",
-      "careerRelevance",
-      "timeline",
-    ]
+    if (requestType === "available-course") {
+      // Available course request fields
+      courseData = {
+        ...courseData,
+        courseId: formData.get("courseId") as string,
+      }
+    } else if (requestType === "new-course") {
+      // New course request fields
+      courseData = {
+        ...courseData,
+        title: formData.get("title") as string,
+        provider: formData.get("provider") as string,
+        description: formData.get("description") as string,
+        category: formData.get("category") as string,
+        estimatedFee: Number(formData.get("estimatedFee")),
+        duration: formData.get("duration") as string,
+        courseUrl: formData.get("courseUrl") as string,
+      }
+    } else if (requestType === "certification") {
+      // Certification request fields
+      courseData = {
+        ...courseData,
+        certificationType: formData.get("certificationType") as string,
+        provider: formData.get("provider") as string,
+        estimatedFee: Number(formData.get("estimatedFee")),
+        description: formData.get("description") as string,
+      }
+    }
+
+    // Validate required fields based on request type
+    const commonFields = ["reason", "careerGoals", "previousExperience", "expectedOutcome", "urgency"]
+    let requiredFields = [...commonFields]
+
+    if (requestType === "available-course") {
+      requiredFields.push("courseId")
+    } else if (requestType === "new-course") {
+      requiredFields.push(
+        "title", "provider", "description", "category", "estimatedFee", 
+        "duration"
+      )
+    } else if (requestType === "certification") {
+      requiredFields.push(
+        "certificationType", "provider", "estimatedFee", "description"
+      )
+    }
+
     for (const field of requiredFields) {
       if (!courseData[field as keyof typeof courseData]) {
         return NextResponse.json({ message: `Missing required field: ${field}` }, { status: 400 })
@@ -51,57 +78,91 @@ export async function POST(request: NextRequest) {
     }
 
     // Process uploaded files
-    const documents: Record<string, any> = {}
-    const requiredDocuments = ["transcript", "resume", "motivation", "financial"]
+    const fileUploadManager = new FileUploadManager()
+    const requiredDocuments = ["academicTranscript", "marksheets", "bankSlip", "electricityBill", "idCard"]
+    
+    // Collect files from FormData
+    const filesToUpload: Record<string, File | null> = {}
+    for (const docType of requiredDocuments) {
+      const file = formData.get(docType) as File | null
+      filesToUpload[docType] = file
+    }
 
-    for (const [key, value] of formData.entries()) {
-      if (key.startsWith("document_") && value instanceof File) {
-        const documentId = key.replace("document_", "")
-
-        // Convert file to base64 for storage (in production, you'd upload to cloud storage)
-        const bytes = await value.arrayBuffer()
-        const buffer = Buffer.from(bytes)
-        const base64 = buffer.toString("base64")
-
-        documents[documentId] = {
-          name: value.name,
-          size: value.size,
-          type: value.type,
-          data: base64, // In production, this would be a URL to cloud storage
-          uploadedAt: new Date(),
-        }
+    // Validate that all required documents are present
+    for (const docId of requiredDocuments) {
+      if (!filesToUpload[docId]) {
+        return NextResponse.json({ message: `Missing required document: ${docId}` }, { status: 400 })
       }
     }
 
-    // Validate required documents
-    for (const docId of requiredDocuments) {
-      if (!documents[docId]) {
-        return NextResponse.json({ message: `Missing required document: ${docId}` }, { status: 400 })
+    // Upload files to server
+    const uploadResults = await fileUploadManager.uploadMultipleFiles(
+      filesToUpload, 
+      session.user.id
+    )
+
+    // Check for upload failures
+    const failedUploads = Object.entries(uploadResults)
+      .filter(([_, result]) => !result.success)
+      .map(([docType, result]) => ({ docType, error: result.error }))
+
+    if (failedUploads.length > 0) {
+      return NextResponse.json({ 
+        message: "File upload failed", 
+        errors: failedUploads 
+      }, { status: 400 })
+    }
+
+    // Generate documents metadata for database
+    const documents: Record<string, any> = {}
+    for (const [docType, file] of Object.entries(filesToUpload)) {
+      if (file && uploadResults[docType].success) {
+        documents[docType] = FileUploadManager.generateFileMetadata(file, uploadResults[docType])
       }
     }
 
     const db = await getDatabase()
 
-    // Check if course request already exists
-    const existingRequest = await db.collection("courseRequests").findOne({
-      studentId: new ObjectId(session.user.id),
-      title: courseData.title,
-      provider: courseData.provider,
-      status: { $in: ["pending", "approved"] },
-    })
+    // Check if similar request already exists
+    let existingRequest
+    if (requestType === "available-course") {
+      existingRequest = await db.collection("courseRequests").findOne({
+        studentId: new ObjectId(session.user.id),
+        courseId: courseData.courseId,
+        requestType: "available-course",
+        status: { $in: ["pending", "approved"] },
+      })
+    } else if (requestType === "new-course") {
+      existingRequest = await db.collection("courseRequests").findOne({
+        studentId: new ObjectId(session.user.id),
+        title: courseData.title,
+        provider: courseData.provider,
+        requestType: "new-course",
+        status: { $in: ["pending", "approved"] },
+      })
+    } else if (requestType === "certification") {
+      existingRequest = await db.collection("courseRequests").findOne({
+        studentId: new ObjectId(session.user.id),
+        certificationType: courseData.certificationType,
+        provider: courseData.provider,
+        requestType: "certification",
+        status: { $in: ["pending", "approved"] },
+      })
+    }
 
     if (existingRequest) {
       return NextResponse.json(
-        { message: "You already have a pending or approved request for this course" },
+        { message: "You already have a pending or approved request for this item" },
         { status: 400 },
       )
     }
 
-    // Create course request
-    const courseRequest = {
+    // Create request
+    const requestDoc = {
       studentId: new ObjectId(session.user.id),
       studentName: session.user.name,
       studentEmail: session.user.email,
+      requestType: requestType,
       ...courseData,
       documents,
       status: "pending",
@@ -110,11 +171,11 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     }
 
-    const result = await db.collection("courseRequests").insertOne(courseRequest)
+    const result = await db.collection("courseRequests").insertOne(requestDoc)
 
     return NextResponse.json(
       {
-        message: "Course request submitted successfully",
+        message: `${requestType === "certification" ? "Certification" : "Course"} request submitted successfully`,
         requestId: result.insertedId,
       },
       { status: 201 },

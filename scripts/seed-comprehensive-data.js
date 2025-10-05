@@ -39,6 +39,24 @@ async function seedComprehensiveData() {
         createdAt: new Date("2024-01-15"),
         updatedAt: new Date("2024-01-15")
       },
+      {
+        _id: new ObjectId(),
+        name: "Super Admin",
+        email: "superadmin@scholarfund.com",
+        password: hashedPassword,
+        userType: "admin",
+        createdAt: new Date("2024-01-10"),
+        updatedAt: new Date("2024-01-10")
+      },
+      {
+        _id: new ObjectId(),
+        name: "Your Name", // Replace with your actual name
+        email: "your.email@scholarfund.com", // Replace with your email
+        password: hashedPassword,
+        userType: "admin",
+        createdAt: new Date("2024-01-05"),
+        updatedAt: new Date("2024-01-05")
+      },
       
       // Student users
       {
@@ -403,6 +421,8 @@ async function seedComprehensiveData() {
     
     console.log("\nLogin credentials for testing:")
     console.log("Admin: admin@scholarfund.com / password123")
+    console.log("Super Admin: superadmin@scholarfund.com / password123")
+    console.log("Your Admin: your.email@scholarfund.com / password123")
     console.log("Student: alice.johnson@email.com / password123")
     console.log("Donor: robert.thompson@techcorp.com / password123")
     

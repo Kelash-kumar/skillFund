@@ -7,6 +7,18 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from "@/components/ui/alert-dialog"
+import { useToast } from "@/components/ui/use-toast"
 import {
   BookOpen,
   FileText,
@@ -20,6 +32,7 @@ import {
   Upload,
   Building,
   Award,
+  Trash2,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -43,17 +56,31 @@ interface FundApplication {
 interface CourseRequest {
   _id: string
   type: "course"
-  title: string
-  provider: string
-  description: string
-  category: string
-  price: number
-  duration: string
-  certificationType: string
-  url: string
-  justification: string
-  careerRelevance: string
-  timeline: string
+  requestType: "available-course" | "new-course" | "certification"
+  // Available course fields
+  courseId?: string
+  // New course fields  
+  title?: string
+  provider?: string
+  description?: string
+  category?: string
+  courseUrl?: string
+  duration?: string
+  // Certification fields
+  certificationType?: string
+  // Common fields
+  reason: string
+  careerGoals: string
+  previousExperience: string
+  expectedOutcome: string
+  urgency: string
+  price?: number // legacy field
+  estimatedFee?: number // new field
+  // Legacy fields
+  url?: string
+  justification?: string
+  careerRelevance?: string
+  timeline?: string
   status: "pending" | "approved" | "rejected"
   createdAt: string
   updatedAt: string
@@ -65,8 +92,10 @@ type Application = FundApplication | CourseRequest
 export default function ApplicationsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { toast } = useToast()
   const [applications, setApplications] = useState<Application[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === "loading") return
@@ -81,30 +110,57 @@ export default function ApplicationsPage() {
 
   const fetchApplications = async () => {
     try {
-      const [fundResponse, courseResponse] = await Promise.all([
-        fetch("/api/student/applications/detailed"),
-        fetch("/api/student/course-requests"),
-      ])
+      // Use the updated detailed API that returns both fund applications and course requests
+      const response = await fetch("/api/student/applications/detailed")
 
-      const applications: Application[] = []
-
-      if (fundResponse.ok) {
-        const fundData = await fundResponse.json()
-        applications.push(...fundData.map((app: any) => ({ ...app, type: "fund" })))
+      if (response.ok) {
+        const data = await response.json()
+        setApplications(data)
+      } else {
+        console.error("Error fetching applications:", response.statusText)
       }
-
-      if (courseResponse.ok) {
-        const courseData = await courseResponse.json()
-        applications.push(...courseData.map((req: any) => ({ ...req, type: "course" })))
-      }
-
-      // Sort by creation date (newest first)
-      applications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      setApplications(applications)
     } catch (error) {
       console.error("Error fetching applications:", error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleDeleteApplication = async (applicationId: string) => {
+    setDeletingId(applicationId)
+    
+    try {
+      const response = await fetch(`/api/student/applications/${applicationId}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        
+        toast({
+          title: "Application Deleted",
+          description: `Application and ${result.filesDeleted} associated files have been removed.`,
+        })
+
+        // Remove the application from the local state
+        setApplications(prev => prev.filter(app => app._id !== applicationId))
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Delete Failed",
+          description: error.message || "Failed to delete application. Please try again.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error deleting application:", error)
+      toast({
+        title: "Error",
+        description: "An error occurred while deleting the application.",
+        variant: "destructive",
+      })
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -219,7 +275,9 @@ export default function ApplicationsPage() {
                             <CardTitle className="text-foreground">
                               {application.type === "fund"
                                 ? (application as FundApplication).courseTitle
-                                : (application as CourseRequest).title}
+                                : (application as CourseRequest).title || 
+                                  (application as CourseRequest).certificationType || 
+                                  "Course Request"}
                             </CardTitle>
                             <Badge className={getStatusColor(application.status)}>{application.status}</Badge>
                             <Badge variant="outline" className="flex items-center gap-1">
@@ -228,18 +286,27 @@ export default function ApplicationsPage() {
                             </Badge>
                           </div>
                           <CardDescription className="text-foreground-muted">
-                            by{" "}
-                            {application.type === "fund"
+                            {(application.type === "fund"
                               ? (application as FundApplication).courseProvider
-                              : (application as CourseRequest).provider}
+                              : (application as CourseRequest).provider) && (
+                              <>by {application.type === "fund"
+                                ? (application as FundApplication).courseProvider
+                                : (application as CourseRequest).provider}</>
+                            )}
+                            {(application as CourseRequest).requestType && (
+                              <span className="ml-2 text-xs bg-muted px-2 py-1 rounded">
+                                {(application as CourseRequest).requestType}
+                              </span>
+                            )}
                           </CardDescription>
                         </div>
                         <div className="text-right">
                           <div className="text-2xl font-bold text-primary">
                             $
                             {(application.type === "fund"
-                              ? (application as FundApplication).amount
-                              : (application as CourseRequest).price
+                              ? (application as FundApplication).amount || 0
+                              : (application as CourseRequest).price || 
+                                (application as CourseRequest).estimatedFee || 0
                             ).toLocaleString()}
                           </div>
                           {application.type === "fund" && (application as FundApplication).fundedAmount && (
@@ -266,14 +333,22 @@ export default function ApplicationsPage() {
                             </>
                           ) : (
                             <>
-                              <h4 className="font-semibold text-foreground mb-2">Course Description:</h4>
+                              <h4 className="font-semibold text-foreground mb-2">Reason for Request:</h4>
                               <p className="text-sm text-foreground-muted mb-4">
-                                {(application as CourseRequest).description}
+                                {(application as CourseRequest).reason}
                               </p>
-                              <h4 className="font-semibold text-foreground mb-2">Justification:</h4>
-                              <p className="text-sm text-foreground-muted">
-                                {(application as CourseRequest).justification}
+                              <h4 className="font-semibold text-foreground mb-2">Career Goals:</h4>
+                              <p className="text-sm text-foreground-muted mb-4">
+                                {(application as CourseRequest).careerGoals}
                               </p>
+                              {(application as CourseRequest).description && (
+                                <>
+                                  <h4 className="font-semibold text-foreground mb-2">Description:</h4>
+                                  <p className="text-sm text-foreground-muted">
+                                    {(application as CourseRequest).description}
+                                  </p>
+                                </>
+                              )}
                             </>
                           )}
                         </div>
@@ -281,24 +356,38 @@ export default function ApplicationsPage() {
                           <div className="space-y-3">
                             {application.type === "course" && (
                               <>
-                                <div className="flex items-center text-sm text-foreground-muted">
-                                  <Building className="h-4 w-4 mr-2" />
-                                  <span>Category: {(application as CourseRequest).category}</span>
-                                </div>
-                                <div className="flex items-center text-sm text-foreground-muted">
-                                  <Clock className="h-4 w-4 mr-2" />
-                                  <span>Duration: {(application as CourseRequest).duration}</span>
-                                </div>
-                                <div className="flex items-center text-sm text-foreground-muted">
-                                  <Award className="h-4 w-4 mr-2" />
-                                  <span>Type: {(application as CourseRequest).certificationType}</span>
-                                </div>
+                                {(application as CourseRequest).category && (
+                                  <div className="flex items-center text-sm text-foreground-muted">
+                                    <Building className="h-4 w-4 mr-2" />
+                                    <span>Category: {(application as CourseRequest).category}</span>
+                                  </div>
+                                )}
+                                {(application as CourseRequest).duration && (
+                                  <div className="flex items-center text-sm text-foreground-muted">
+                                    <Clock className="h-4 w-4 mr-2" />
+                                    <span>Duration: {(application as CourseRequest).duration}</span>
+                                  </div>
+                                )}
+                                {(application as CourseRequest).certificationType && (
+                                  <div className="flex items-center text-sm text-foreground-muted">
+                                    <Award className="h-4 w-4 mr-2" />
+                                    <span>Certification: {(application as CourseRequest).certificationType}</span>
+                                  </div>
+                                )}
+                                {(application as CourseRequest).urgency && (
+                                  <div className="flex items-center text-sm text-foreground-muted">
+                                    <AlertCircle className="h-4 w-4 mr-2" />
+                                    <span>Urgency: {(application as CourseRequest).urgency}</span>
+                                  </div>
+                                )}
                               </>
                             )}
-                            <div className="flex items-center text-sm text-foreground-muted">
-                              <Calendar className="h-4 w-4 mr-2" />
-                              <span>Timeline: {application.timeline}</span>
-                            </div>
+                            {(application as any).timeline && (
+                              <div className="flex items-center text-sm text-foreground-muted">
+                                <Calendar className="h-4 w-4 mr-2" />
+                                <span>Timeline: {(application as any).timeline}</span>
+                              </div>
+                            )}
                             <div className="flex items-center text-sm text-foreground-muted">
                               <Clock className="h-4 w-4 mr-2" />
                               <span>Applied: {new Date(application.createdAt).toLocaleDateString()}</span>
@@ -317,23 +406,65 @@ export default function ApplicationsPage() {
                             )}
                           </div>
 
-                          <div className="mt-4 pt-4 border-t border-border">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                window.open(
-                                  application.type === "fund"
-                                    ? (application as FundApplication).courseUrl
-                                    : (application as CourseRequest).url,
-                                  "_blank",
-                                )
-                              }
-                              className="w-full"
-                            >
-                              <ExternalLink className="h-4 w-4 mr-2" />
-                              View Course Details
-                            </Button>
+                          <div className="mt-4 pt-4 border-t border-border space-y-2">
+                            {(application.type === "fund" 
+                              ? (application as FundApplication).courseUrl 
+                              : (application as CourseRequest).courseUrl || (application as CourseRequest).url
+                            ) && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  window.open(
+                                    application.type === "fund"
+                                      ? (application as FundApplication).courseUrl
+                                      : (application as CourseRequest).courseUrl || (application as CourseRequest).url,
+                                    "_blank",
+                                  )
+                                }
+                                className="w-full"
+                              >
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                View Course Details
+                              </Button>
+                            )}
+                            
+                            {/* Delete Button - Only show for pending applications */}
+                            {application.status === "pending" && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="w-full"
+                                    disabled={deletingId === application._id}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    {deletingId === application._id ? "Deleting..." : "Delete Application"}
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Application</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete this application? This action cannot be undone and will:
+                                      <br />• Remove the application permanently
+                                      <br />• Delete all uploaded documents
+                                      <br />• Clear all associated data
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDeleteApplication(application._id)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Yes, Delete Application
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
                           </div>
                         </div>
                       </div>

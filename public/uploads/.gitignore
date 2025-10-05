@@ -1,0 +1,14 @@
+# Ignore all uploaded files for security and storage reasons
+/documents/students/*/
+*.pdf
+*.jpg
+*.jpeg
+*.png
+*.doc
+*.docx
+
+# Keep directory structure
+!.gitkeep
+!/documents/
+!/documents/students/
+!/documents/students/.gitkeep

@@ -7,19 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+
+
 import {
   BookOpen,
   FileText,
-  User,
+  User, 
   Building,
   DollarSign,
   Calendar,
@@ -27,55 +20,315 @@ import {
   XCircle,
   Clock,
   Eye,
+  AlertTriangle,
+  AlertCircle,
+  Download,
+  Paperclip,
 } from "lucide-react"
 import Link from "next/link"
 
-interface Application {
+// Updated interface based on actual MongoDB schema
+interface UnifiedApplication {
   _id: string
+  studentId: string
   studentName: string
   studentEmail: string
+  requestType: "available-course" | "new-course" | "certification"
+  
+  // Course information (varies by type)
+  courseId?: string
   courseTitle: string
   courseProvider: string
-  courseCategory: string
-  amount: number
+  title?: string
+  certificationType?: string
+  provider?: string
+  category?: string
+  duration?: string
+  courseUrl?: string
+  
+  // Financial information
+  estimatedCost: number
+  
+  // Application details
   reason: string
-  careerGoals: string
-  timeline: string
-  additionalInfo: string
-  status: "pending" | "approved" | "rejected" | "funded"
+  description?: string
+  careerGoals?: string
+  previousExperience?: string
+  expectedOutcome?: string
+  urgency: "low" | "medium" | "high"
+  
+  // Status and approval
+  status: "pending" | "approved" | "rejected"
+  isApproved: boolean
+  
+  // Documents with proper structure
+  documents: {
+    [key: string]: {
+      originalName: string
+      fileName: string
+      filePath: string
+      fileSize: number
+      fileType: string
+      uploadedAt: string
+    }
+  }
+  documentCount: number
+  documentNames: string[]
+  
+  // Timestamps
   createdAt: string
   updatedAt: string
 }
 
-interface CourseRequest {
-  _id: string
-  studentName: string
-  studentEmail: string
-  title: string
-  provider: string
-  description: string
-  category: string
-  price: number
-  duration: string
-  certificationType: string
-  url: string
-  justification: string
-  careerRelevance: string
-  timeline: string
-  status: "pending" | "approved" | "rejected"
-  reviewNote?: string
-  createdAt: string
+// Application Grid Component
+function ApplicationGrid({ 
+  applications, 
+  router, 
+  type 
+}: { 
+  applications: UnifiedApplication[], 
+  router: any,
+  type?: string 
+}) {
+  if (applications.length === 0) {
+    return (
+      <Card className="border-border bg-card">
+        <CardContent className="pt-6">
+          <div className="text-center py-8">
+            <FileText className="h-12 w-12 text-foreground-muted mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">No applications found</h3>
+            <p className="text-foreground-muted">No applications match the current filter</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {applications.map((application) => (
+        <ApplicationCard 
+          key={application._id} 
+          application={application} 
+          router={router}
+          type={type}
+        />
+      ))}
+    </div>
+  )
+}
+
+// Individual Application Card Component
+function ApplicationCard({ 
+  application, 
+  router,
+  type 
+}: { 
+  application: UnifiedApplication, 
+  router: any,
+  type?: string 
+}) {
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "approved":
+        return <CheckCircle className="h-4 w-4 text-accent" />
+      case "rejected":
+        return <XCircle className="h-4 w-4 text-destructive" />
+      case "funded":
+        return <DollarSign className="h-4 w-4 text-primary" />
+      default:
+        return <Clock className="h-4 w-4 text-foreground-muted" />
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "approved":
+        return "bg-accent/10 text-accent border-accent/20"
+      case "rejected":
+        return "bg-destructive/10 text-destructive border-destructive/20"
+      case "funded":
+        return "bg-primary/10 text-primary border-primary/20"
+      default:
+        return "bg-foreground-muted/10 text-foreground-muted border-foreground-muted/20"
+    }
+  }
+
+  const getTypeIcon = (appType: string) => {
+    switch (appType) {
+      case "available-course":
+        return <BookOpen className="h-6 w-6 text-blue-600" />
+      case "new-course":
+        return <FileText className="h-6 w-6 text-green-600" />
+      case "certification":
+        return <Building className="h-6 w-6 text-purple-600" />
+      default:
+        return <User className="h-6 w-6 text-primary" />
+    }
+  }
+
+  const getTypeLabel = (appType: string) => {
+    switch (appType) {
+      case "available-course":
+        return "Available Course"
+      case "new-course":
+        return "New Course Request"
+      case "certification":
+        return "Certification"
+      default:
+        return "Application"
+    }
+  }
+
+  const getTypeBadgeColor = (appType: string) => {
+    switch (appType) {
+      case "available-course":
+        return "bg-blue-100 text-blue-800 border-blue-200"
+      case "new-course":
+        return "bg-green-100 text-green-800 border-green-200"
+      case "certification":
+        return "bg-purple-100 text-purple-800 border-purple-200"
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200"
+    }
+  }
+
+  const handleNavigation = () => {
+    if (!application._id) {
+      console.error('❌ No application ID found:', application)
+      return
+    }
+    
+    const url = `/admin/applications/${application._id}`
+    console.log('� Simple navigation to:', url, 'for application:', application.studentName)
+    
+    // Use window.location for more reliable navigation
+    window.location.href = url
+  }
+
+  return (
+    <Card 
+      className="border-border bg-card hover:shadow-md transition-shadow cursor-pointer"
+      onClick={handleNavigation}
+    >
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+              {getTypeIcon(application.requestType)}
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <CardTitle className="text-lg text-foreground">{application.studentName}</CardTitle>
+                <Badge className={`text-xs ${getTypeBadgeColor(application.requestType)}`}>
+                  {getTypeLabel(application.requestType)}
+                </Badge>
+              </div>
+              <CardDescription className="text-foreground-muted">
+                {application.studentEmail}
+              </CardDescription>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Badge className={getStatusColor(application.status)}>
+              {getStatusIcon(application.status)}
+              <span className="ml-1">{application.status}</span>
+            </Badge>
+            {application.urgency && (
+              <Badge 
+                variant={application.urgency === "high" ? "destructive" : application.urgency === "medium" ? "default" : "secondary"}
+                className="flex items-center gap-1"
+              >
+                {application.urgency === "high" && <AlertTriangle className="h-3 w-3" />}
+                {application.urgency === "medium" && <AlertCircle className="h-3 w-3" />}
+                {application.urgency === "low" && <Clock className="h-3 w-3" />}
+                {application.urgency}
+              </Badge>
+            )}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={(e) => {
+                e.stopPropagation()
+                handleNavigation()
+              }}
+            >
+              <Eye className="h-4 w-4 mr-1" />
+              View Details
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <h4 className="font-semibold text-foreground mb-1">
+              {application.requestType === "certification" ? "Certification:" : "Course:"}
+            </h4>
+            <p className="text-sm text-foreground-muted font-medium">{application.courseTitle}</p>
+            <p className="text-xs text-foreground-muted">{application.courseProvider}</p>
+            {application.duration && (
+              <p className="text-xs text-blue-600 mt-1">Duration: {application.duration}</p>
+            )}
+            {application.category && (
+              <p className="text-xs text-green-600 mt-1">Category: {application.category}</p>
+            )}
+          </div>
+          <div>
+            <h4 className="font-semibold text-foreground mb-1">
+              {application.requestType === "available-course" ? "Estimated Cost:" : "Requested Amount:"}
+            </h4>
+            <p className="text-lg font-bold text-primary">${application.estimatedCost?.toLocaleString() || 0}</p>
+            {application.courseUrl && application.requestType === "new-course" && (
+              <p className="text-xs text-blue-600 mt-1">
+                <a href={application.courseUrl} target="_blank" rel="noopener noreferrer">View Course</a>
+              </p>
+            )}
+          </div>
+          <div>
+            <h4 className="font-semibold text-foreground mb-1">Applied:</h4>
+            <div className="flex items-center text-sm text-foreground-muted">
+              <Calendar className="h-4 w-4 mr-1" />
+              {new Date(application.createdAt).toLocaleDateString()}
+            </div>
+            {application.documentCount > 0 && (
+              <div className="flex items-center mt-1 text-xs text-blue-600">
+                <Paperclip className="h-3 w-3 mr-1" />
+                <span>{application.documentCount} document{application.documentCount === 1 ? '' : 's'}</span>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="mt-4">
+          <p className="text-sm text-foreground-muted line-clamp-2">
+            {application.description || application.reason}
+          </p>
+          {application.documentNames && application.documentNames.length > 0 && (
+            <div className="flex items-start mt-2 text-xs text-foreground-muted">
+              <Paperclip className="h-3 w-3 mr-1 mt-0.5" />
+              <div>
+                <span className="font-medium">Documents attached:</span>
+                <div className="ml-1 flex flex-wrap gap-1 mt-1">
+                  {application.documentNames.map((docName, index) => (
+                    <Badge key={index} variant="outline" className="text-xs px-1 py-0">
+                      {docName}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
 
 export default function AdminApplicationsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [applications, setApplications] = useState<Application[]>([])
-  const [courseRequests, setCourseRequests] = useState<CourseRequest[]>([])
-  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null)
-  const [reviewNote, setReviewNote] = useState("")
+  const [allApplications, setAllApplications] = useState<UnifiedApplication[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isProcessing, setIsProcessing] = useState(false)
 
   useEffect(() => {
     if (status === "loading") return
@@ -90,51 +343,31 @@ export default function AdminApplicationsPage() {
 
   const fetchApplications = async () => {
     try {
-      const [appsRes, crRes] = await Promise.all([
-        fetch("/api/admin/applications"),
-        fetch("/api/admin/course-requests"),
-      ])
-      if (appsRes.ok) {
-        const data = await appsRes.json()
-        setApplications(data)
-      }
-      if (crRes.ok) {
-        const cr = await crRes.json()
-        setCourseRequests(cr)
+      console.log("🔍 Fetching applications from unified API...");
+      const response = await fetch("/api/admin/unified-applications", { 
+        credentials: 'include' 
+      })
+      
+      console.log("📡 API Response status:", response.status);
+      
+      if (response.ok) {
+        const data = await response.json()
+        console.log("✅ Received applications:", data);
+        console.log("📊 Application count:", Array.isArray(data) ? data.length : 'Not an array');
+        setAllApplications(data)
+      } else {
+        const errorText = await response.text();
+        console.error("❌ Failed to fetch applications:", response.status, response.statusText);
+        console.error("❌ Error response:", errorText);
       }
     } catch (error) {
-      console.error("Error fetching applications:", error)
+      console.error("❌ Network error fetching applications:", error)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleApplicationAction = async (applicationId: string, action: "approve" | "reject") => {
-    setIsProcessing(true)
-    try {
-      const response = await fetch("/api/admin/applications/review", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          applicationId,
-          action,
-          note: reviewNote,
-        }),
-      })
 
-      if (response.ok) {
-        fetchApplications()
-        setSelectedApplication(null)
-        setReviewNote("")
-      }
-    } catch (error) {
-      console.error("Error processing application:", error)
-    } finally {
-      setIsProcessing(false)
-    }
-  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -162,9 +395,25 @@ export default function AdminApplicationsPage() {
     }
   }
 
-  const filterApplications = (status: string) => {
-    if (status === "all") return applications
-    return applications.filter((app) => app.status === status)
+  const filterApplications = (status: string, requestType?: string) => {
+    let filtered = allApplications
+    
+    if (status !== "all") {
+      filtered = filtered.filter((app) => app.status === status)
+    }
+    
+    if (requestType) {
+      filtered = filtered.filter((app) => app.requestType === requestType)
+    }
+    
+    return filtered
+  }
+
+  const getApplicationsByType = (requestType: "available-course" | "new-course" | "certification") => {
+    const filtered = allApplications.filter(app => app.requestType === requestType)
+    console.log(`🔍 Applications for ${requestType}:`, filtered.length)
+    console.log(`🔍 Sample application IDs:`, filtered.slice(0, 3).map(app => ({ id: app._id, type: app.requestType })))
+    return filtered
   }
 
   if (status === "loading" || isLoading) {
@@ -177,6 +426,13 @@ export default function AdminApplicationsPage() {
       </div>
     )
   }
+
+  // Debug logging
+  console.log("🔍 Admin Applications Debug Info:");
+  console.log("   Session:", session?.user);
+  console.log("   Loading:", isLoading);
+  console.log("   All Applications:", allApplications);
+  console.log("   Application Count:", allApplications.length);
 
   return (
     <div className="min-h-screen bg-background">
@@ -222,261 +478,69 @@ export default function AdminApplicationsPage() {
           <p className="text-xl text-foreground-muted">Review and manage student funding applications</p>
         </div>
 
-        <Tabs defaultValue="pending" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="all">All ({applications.length})</TabsTrigger>
+        <Tabs defaultValue="all" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="all">All Applications ({allApplications.length})</TabsTrigger>
+            <TabsTrigger value="available-courses">Available Courses ({getApplicationsByType("available-course").length})</TabsTrigger>
+            <TabsTrigger value="new-courses">New Courses ({getApplicationsByType("new-course").length})</TabsTrigger>
+            <TabsTrigger value="certifications">Certifications ({getApplicationsByType("certification").length})</TabsTrigger>
             <TabsTrigger value="pending">Pending ({filterApplications("pending").length})</TabsTrigger>
-            <TabsTrigger value="approved">Approved ({filterApplications("approved").length})</TabsTrigger>
-            <TabsTrigger value="funded">Funded ({filterApplications("funded").length})</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected ({filterApplications("rejected").length})</TabsTrigger>
-            <TabsTrigger value="course-requests">Course Requests ({courseRequests.length})</TabsTrigger>
           </TabsList>
 
-          {["all", "pending", "approved", "funded", "rejected"].map((tabValue) => (
-            <TabsContent key={tabValue} value={tabValue} className="space-y-6">
-              {filterApplications(tabValue).length === 0 ? (
-                <Card className="border-border bg-card">
-                  <CardContent className="pt-6">
-                    <div className="text-center py-8">
-                      <FileText className="h-12 w-12 text-foreground-muted mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-foreground mb-2">No applications found</h3>
-                      <p className="text-foreground-muted">No applications match the current filter</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {filterApplications(tabValue).map((application) => (
-                    <Card key={application._id} className="border-border bg-card">
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                              <User className="h-6 w-6 text-primary" />
-                            </div>
-                            <div>
-                              <CardTitle className="text-lg text-foreground">{application.studentName}</CardTitle>
-                              <CardDescription className="text-foreground-muted">
-                                {application.studentEmail}
-                              </CardDescription>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Badge className={getStatusColor(application.status)}>
-                              {getStatusIcon(application.status)}
-                              <span className="ml-1">{application.status}</span>
-                            </Badge>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="outline" size="sm" onClick={() => setSelectedApplication(application)}>
-                                  <Eye className="h-4 w-4 mr-1" />
-                                  Review
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                                <DialogHeader>
-                                  <DialogTitle>Application Review</DialogTitle>
-                                  <DialogDescription>
-                                    Review and take action on this funding application
-                                  </DialogDescription>
-                                </DialogHeader>
-                                {selectedApplication && (
-                                  <div className="space-y-6">
-                                    {/* Student Info */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                      <div>
-                                        <h3 className="font-semibold text-foreground mb-2">Student Information</h3>
-                                        <div className="space-y-2 text-sm">
-                                          <div className="flex items-center">
-                                            <User className="h-4 w-4 mr-2 text-foreground-muted" />
-                                            <span>{selectedApplication.studentName}</span>
-                                          </div>
-                                          <div className="flex items-center">
-                                            <span className="text-foreground-muted">Email:</span>
-                                            <span className="ml-2">{selectedApplication.studentEmail}</span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                      <div>
-                                        <h3 className="font-semibold text-foreground mb-2">Course Information</h3>
-                                        <div className="space-y-2 text-sm">
-                                          <div className="flex items-center">
-                                            <Building className="h-4 w-4 mr-2 text-foreground-muted" />
-                                            <span>{selectedApplication.courseProvider}</span>
-                                          </div>
-                                          <div className="font-medium">{selectedApplication.courseTitle}</div>
-                                          <div className="flex items-center">
-                                            <DollarSign className="h-4 w-4 mr-1 text-primary" />
-                                            <span className="font-semibold text-primary">
-                                              ${selectedApplication.amount.toLocaleString()}
-                                            </span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    {/* Application Details */}
-                                    <div className="space-y-4">
-                                      <div>
-                                        <h4 className="font-semibold text-foreground mb-2">Why they need funding:</h4>
-                                        <p className="text-sm text-foreground-muted bg-background-muted p-3 rounded-lg">
-                                          {selectedApplication.reason}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <h4 className="font-semibold text-foreground mb-2">Career goals:</h4>
-                                        <p className="text-sm text-foreground-muted bg-background-muted p-3 rounded-lg">
-                                          {selectedApplication.careerGoals}
-                                        </p>
-                                      </div>
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                          <h4 className="font-semibold text-foreground mb-2">Timeline:</h4>
-                                          <p className="text-sm text-foreground-muted">
-                                            {selectedApplication.timeline}
-                                          </p>
-                                        </div>
-                                        <div>
-                                          <h4 className="font-semibold text-foreground mb-2">Applied:</h4>
-                                          <div className="flex items-center text-sm text-foreground-muted">
-                                            <Calendar className="h-4 w-4 mr-1" />
-                                            {new Date(selectedApplication.createdAt).toLocaleDateString()}
-                                          </div>
-                                        </div>
-                                      </div>
-                                      {selectedApplication.additionalInfo && (
-                                        <div>
-                                          <h4 className="font-semibold text-foreground mb-2">
-                                            Additional Information:
-                                          </h4>
-                                          <p className="text-sm text-foreground-muted bg-background-muted p-3 rounded-lg">
-                                            {selectedApplication.additionalInfo}
-                                          </p>
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    {/* Review Actions */}
-                                    {selectedApplication.status === "pending" && (
-                                      <div className="space-y-4 border-t border-border pt-4">
-                                        <div>
-                                          <label className="text-sm font-semibold text-foreground mb-2 block">
-                                            Review Note (Optional):
-                                          </label>
-                                          <Textarea
-                                            placeholder="Add a note about your decision..."
-                                            value={reviewNote}
-                                            onChange={(e) => setReviewNote(e.target.value)}
-                                            className="border-input-border bg-input"
-                                          />
-                                        </div>
-                                        <div className="flex space-x-3">
-                                          <Button
-                                            onClick={() => handleApplicationAction(selectedApplication._id, "approve")}
-                                            disabled={isProcessing}
-                                            className="bg-accent hover:bg-accent-hover"
-                                          >
-                                            <CheckCircle className="h-4 w-4 mr-2" />
-                                            {isProcessing ? "Processing..." : "Approve"}
-                                          </Button>
-                                          <Button
-                                            onClick={() => handleApplicationAction(selectedApplication._id, "reject")}
-                                            disabled={isProcessing}
-                                            variant="destructive"
-                                          >
-                                            <XCircle className="h-4 w-4 mr-2" />
-                                            {isProcessing ? "Processing..." : "Reject"}
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </DialogContent>
-                            </Dialog>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <h4 className="font-semibold text-foreground mb-1">Course:</h4>
-                            <p className="text-sm text-foreground-muted">{application.courseTitle}</p>
-                            <p className="text-xs text-foreground-muted">{application.courseProvider}</p>
-                          </div>
-                          <div>
-                            <h4 className="font-semibold text-foreground mb-1">Amount:</h4>
-                            <p className="text-lg font-bold text-primary">${application.amount.toLocaleString()}</p>
-                          </div>
-                          <div>
-                            <h4 className="font-semibold text-foreground mb-1">Applied:</h4>
-                            <div className="flex items-center text-sm text-foreground-muted">
-                              <Calendar className="h-4 w-4 mr-1" />
-                              {new Date(application.createdAt).toLocaleDateString()}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="mt-4">
-                          <p className="text-sm text-foreground-muted line-clamp-2">{application.reason}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-          ))}
-
-          <TabsContent value="course-requests" className="space-y-6" id="course-requests">
-            <Card className="border-border bg-card">
-              <CardHeader>
-                <CardTitle className="text-foreground">Course Requests</CardTitle>
-                <CardDescription className="text-foreground-muted">All requests submitted by students</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {courseRequests.length === 0 ? (
-                  <div className="text-center py-8 text-foreground-muted">No course requests found</div>
-                ) : (
-                  <div className="space-y-4">
-                    {courseRequests.map((r) => (
-                      <div key={r._id} className="p-4 border border-border rounded-lg bg-background-muted space-y-2">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h4 className="font-semibold text-foreground">{r.title}</h4>
-                            <p className="text-sm text-foreground-muted">{r.provider} • {r.category}</p>
-                            <p className="text-xs text-foreground-muted">Requested by {r.studentName} ({r.studentEmail})</p>
-                          </div>
-                          <Badge variant={r.status === "approved" ? "default" : r.status === "rejected" ? "secondary" : "outline"}>
-                            {r.status}
-                          </Badge>
-                        </div>
-                        <div className="text-sm text-foreground-muted">
-                          <span className="font-semibold text-foreground">Justification:</span> {r.justification}
-                        </div>
-                        <div className="text-sm text-foreground-muted">
-                          <span className="font-semibold text-foreground">Career Relevance:</span> {r.careerRelevance}
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="font-semibold text-primary">${'{'}r.price.toLocaleString(){'}'}</span>
-                          <span className="text-foreground-muted">Timeline: {r.timeline}</span>
-                        </div>
-                        {r.status === "pending" && (
-                          <div className="flex gap-2">
-                            <Button onClick={async () => { setIsProcessing(true); await fetch('/api/admin/course-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ requestId: r._id, action: 'approve' }) }); setIsProcessing(false); fetchApplications(); }} disabled={isProcessing} className="bg-accent hover:bg-accent-hover">
-                              Approve
-                            </Button>
-                            <Button onClick={async () => { setIsProcessing(true); await fetch('/api/admin/course-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ requestId: r._id, action: 'reject' }) }); setIsProcessing(false); fetchApplications(); }} disabled={isProcessing} variant="destructive">
-                              Reject
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          {/* All Applications */}
+          <TabsContent value="all" className="space-y-6">
+            <ApplicationGrid applications={allApplications} router={router} />
           </TabsContent>
+
+          {/* Available Courses */}
+          <TabsContent value="available-courses" className="space-y-6">
+            <div className="mb-4">
+              <h2 className="text-2xl font-semibold text-foreground mb-2">Available Course Applications</h2>
+              <p className="text-foreground-muted">Applications for courses already in our catalog</p>
+            </div>
+            <ApplicationGrid 
+              applications={getApplicationsByType("available-course")} 
+              router={router} 
+              type="available-course" 
+            />
+          </TabsContent>
+
+          {/* New Courses */}
+          <TabsContent value="new-courses" className="space-y-6">
+            <div className="mb-4">
+              <h2 className="text-2xl font-semibold text-foreground mb-2">New Course Requests</h2>
+              <p className="text-foreground-muted">Student requests for courses not currently in our catalog</p>
+            </div>
+            <ApplicationGrid 
+              applications={getApplicationsByType("new-course")} 
+              router={router} 
+              type="new-course" 
+            />
+          </TabsContent>
+
+          {/* Certifications */}
+          <TabsContent value="certifications" className="space-y-6">
+            <div className="mb-4">
+              <h2 className="text-2xl font-semibold text-foreground mb-2">Certification Requests</h2>
+              <p className="text-foreground-muted">Applications for professional certifications and specialized credentials</p>
+            </div>
+            <ApplicationGrid 
+              applications={getApplicationsByType("certification")} 
+              router={router} 
+              type="certification" 
+            />
+          </TabsContent>
+
+          {/* Pending Applications */}
+          <TabsContent value="pending" className="space-y-6">
+            <div className="mb-4">
+              <h2 className="text-2xl font-semibold text-foreground mb-2">Pending Applications</h2>
+              <p className="text-foreground-muted">All applications awaiting review</p>
+            </div>
+            <ApplicationGrid applications={filterApplications("pending")} router={router} />
+          </TabsContent>
+
+
         </Tabs>
       </div>
     </div>

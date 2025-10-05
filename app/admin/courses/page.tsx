@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { BookOpen, Building, CheckCircle, Clock, DollarSign, Filter, Tag, XCircle } from "lucide-react"
 import Link from "next/link"
+import { Navigation } from "@/components/navigation"
 
 interface Course {
   _id: string
@@ -70,29 +71,44 @@ export default function AdminCoursesPage() {
 
   const fetchData = async () => {
     try {
+      console.log("Fetching courses and requests...")
       const [cRes, rRes] = await Promise.all([
         fetch("/api/admin/courses"),
         fetch("/api/admin/course-requests"),
       ])
-      if (cRes.ok) setCourses(await cRes.json())
-      if (rRes.ok) setRequests(await rRes.json())
+      
+      if (cRes.ok) {
+        const coursesData = await cRes.json()
+        console.log("Courses fetched:", coursesData.length)
+        setCourses(coursesData)
+      } else {
+        console.error("Failed to fetch courses:", cRes.status, cRes.statusText)
+      }
+      
+      if (rRes.ok) {
+        const requestsData = await rRes.json()
+        console.log("Course requests fetched:", requestsData.length)
+        setRequests(requestsData)
+      } else {
+        console.error("Failed to fetch course requests:", rRes.status, rRes.statusText)
+      }
     } catch (e) {
-      console.error(e)
+      console.error("Error fetching data:", e)
     } finally {
       setLoading(false)
     }
   }
 
   const filteredCourses = useMemo(() => {
-    let list = courses
+    let list = courses.filter(course => course && course.title) // Filter out invalid courses
     if (search) {
       const s = search.toLowerCase()
       list = list.filter(
         (c) =>
-          c.title.toLowerCase().includes(s) ||
-          c.provider.toLowerCase().includes(s) ||
+          c.title?.toLowerCase().includes(s) ||
+          c.provider?.toLowerCase().includes(s) ||
           c.description?.toLowerCase().includes(s) ||
-          c.category.toLowerCase().includes(s),
+          c.category?.toLowerCase().includes(s),
       )
     }
     if (category !== "all") list = list.filter((c) => c.category === category)
@@ -147,26 +163,10 @@ export default function AdminCoursesPage() {
   const providers = Array.from(new Set(courses.map((c) => c.provider))).sort()
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Link href="/" className="flex items-center space-x-2">
-              <BookOpen className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold text-foreground">ScholarFund</span>
-            </Link>
-            <Badge variant="secondary" className="ml-2">Admin</Badge>
-          </div>
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link href="/admin/dashboard" className="text-foreground-muted hover:text-foreground transition-colors">Dashboard</Link>
-            <Link href="/admin/applications" className="text-foreground-muted hover:text-foreground transition-colors">Applications</Link>
-            <Link href="/admin/courses" className="text-primary font-medium">Courses</Link>
-            <Link href="/admin/users" className="text-foreground-muted hover:text-foreground transition-colors">Users</Link>
-          </nav>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
+    <>
+      <Navigation />
+      <div className="lg:pl-64">
+        <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">Course Management</h1>
           <p className="text-xl text-foreground-muted">View approved courses and manage course requests</p>
@@ -210,27 +210,70 @@ export default function AdminCoursesPage() {
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCourses.map((c) => (
-                <Card key={c._id} className="bg-card border-border">
-                  <CardHeader>
-                    <div className="flex justify-between items-start mb-2">
-                      <Badge variant="secondary" className="text-xs">{c.category}</Badge>
-                      <span className="text-sm font-semibold text-primary">${c.price.toLocaleString()}</span>
-                    </div>
-                    <CardTitle className="text-lg text-foreground">{c.title}</CardTitle>
-                    <CardDescription className="text-foreground-muted flex items-center"><Building className="h-4 w-4 mr-1" />{c.provider}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-foreground-muted line-clamp-3 mb-4">{c.description}</p>
-                    <div className="text-xs text-foreground-muted flex justify-between">
-                      <span className="flex items-center"><Clock className="h-3 w-3 mr-1" />{c.duration}</span>
-                      <span className="flex items-center"><Tag className="h-3 w-3 mr-1" />{c.certificationType}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {filteredCourses.length === 0 ? (
+              <Card className="col-span-full">
+                <CardContent className="pt-8 pb-8 text-center text-foreground-muted">
+                  <BookOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold mb-2">No courses found</h3>
+                  <p>Try adjusting your search filters or add new courses to the system.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCourses.map((c) => (
+                  <Card key={c._id} className="bg-card border-border hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <div className="flex justify-between items-start mb-2">
+                        <Badge variant="secondary" className="text-xs">
+                          {c.category || "General"}
+                        </Badge>
+                        <span className="text-sm font-semibold text-primary">
+                          {c.price !== undefined ? `$${c.price.toLocaleString()}` : "Free"}
+                        </span>
+                      </div>
+                      <CardTitle className="text-lg text-foreground line-clamp-2">
+                        {c.title}
+                      </CardTitle>
+                      <CardDescription className="text-foreground-muted flex items-center">
+                        <Building className="h-4 w-4 mr-1" />
+                        {c.provider || "Unknown Provider"}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-foreground-muted line-clamp-3 mb-4">
+                        {c.description || "No description available"}
+                      </p>
+                      <div className="space-y-2">
+                        <div className="text-xs text-foreground-muted flex justify-between items-center">
+                          <span className="flex items-center">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {c.duration || "Duration not specified"}
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            {c.isApproved ? "Approved" : "Pending"}
+                          </Badge>
+                        </div>
+                        <div className="text-xs text-foreground-muted">
+                          <span className="flex items-center">
+                            <Tag className="h-3 w-3 mr-1" />
+                            {c.certificationType || "Certificate"}
+                          </span>
+                        </div>
+                        {c.url && (
+                          <div className="pt-2">
+                            <Button variant="outline" size="sm" className="w-full" asChild>
+                              <a href={c.url} target="_blank" rel="noopener noreferrer">
+                                View Course
+                              </a>
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="requests" className="space-y-6">
@@ -290,7 +333,8 @@ export default function AdminCoursesPage() {
             )}
           </TabsContent>
         </Tabs>
+        </div>
       </div>
-    </div>
+    </>
   )
 }

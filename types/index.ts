@@ -48,12 +48,50 @@ export interface FundingApplication {
   _id?: string
   studentId: string
   courseId: string
-  amount: number
-  reason: string
+  // Support both old and new field names for backward compatibility
+  amount?: number
+  estimatedCost?: number
+  reason?: string
+  description?: string
+  urgency?: "low" | "medium" | "high"
+  documents?: {
+    [key: string]: string
+  }
   status: "pending" | "approved" | "rejected" | "funded"
   approvedBy?: string
   fundedAmount?: number
   donors?: string[]
+  submissionDate?: Date
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface CourseRequest {
+  _id?: string
+  studentId: string
+  studentName?: string
+  studentEmail?: string
+  courseName?: string
+  title?: string
+  provider: string
+  description: string
+  category: string
+  cost?: number
+  price?: number
+  duration: string
+  certificationType?: string
+  url?: string
+  justification: string
+  careerRelevance: string
+  timeline: string
+  documents?: {
+    [key: string]: string
+  }
+  status: "pending" | "approved" | "rejected"
+  reviewNote?: string
+  reviewedBy?: string
+  reviewedAt?: Date
+  submissionDate?: Date
   createdAt: Date
   updatedAt: Date
 }

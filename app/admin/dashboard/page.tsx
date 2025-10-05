@@ -20,6 +20,7 @@ import {
   Shield,
 } from "lucide-react"
 import Link from "next/link"
+import { Navigation } from "@/components/navigation"
 
 interface AdminStats {
   totalUsers: number
@@ -118,43 +119,10 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Link href="/" className="flex items-center space-x-2">
-              <BookOpen className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold text-foreground">ScholarFund</span>
-            </Link>
-            <Badge variant="secondary" className="ml-2">
-              Admin
-            </Badge>
-          </div>
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link href="/admin/applications" className="text-foreground-muted hover:text-foreground transition-colors">
-              Applications
-            </Link>
-            <Link href="/admin/courses" className="text-foreground-muted hover:text-foreground transition-colors">
-              Courses
-            </Link>
-            <Link href="/admin/users" className="text-foreground-muted hover:text-foreground transition-colors">
-              Users
-            </Link>
-            <Link href="/admin/analytics" className="text-foreground-muted hover:text-foreground transition-colors">
-              Analytics
-            </Link>
-          </nav>
-          <div className="flex items-center space-x-3">
-            <span className="text-sm text-foreground-muted">Admin: {session?.user?.name}</span>
-            <Button variant="outline" onClick={() => router.push("/api/auth/signout")}>
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
+    <>
+      <Navigation />
+      <div className="lg:pl-64">
+        <div className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">Admin Dashboard</h1>
@@ -463,7 +431,8 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
         </Tabs>
+        </div>
       </div>
-    </div>
+    </>
   )
 }

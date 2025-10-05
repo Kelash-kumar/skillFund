@@ -26,7 +26,10 @@ export async function GET(request: NextRequest) {
           },
         },
         {
-          $unwind: "$student",
+          $unwind: {
+            path: "$student",
+            preserveNullAndEmptyArrays: true,
+          },
         },
         {
           $lookup: {
@@ -37,22 +40,33 @@ export async function GET(request: NextRequest) {
           },
         },
         {
-          $unwind: "$course",
+          $unwind: {
+            path: "$course",
+            preserveNullAndEmptyArrays: true,
+          },
         },
         {
           $project: {
             _id: 1,
-            studentName: "$student.name",
-            studentEmail: "$student.email",
-            courseTitle: "$course.title",
-            courseProvider: "$course.provider",
-            courseCategory: "$course.category",
-            amount: 1,
-            reason: 1,
+            studentId: 1,
+            courseId: 1,
+            studentName: { $ifNull: ["$student.name", "Unknown Student"] },
+            studentEmail: { $ifNull: ["$student.email", "No Email"] },
+            courseTitle: { $ifNull: ["$course.title", "Unknown Course"] },
+            courseProvider: { $ifNull: ["$course.provider", "Unknown Provider"] },
+            courseCategory: { $ifNull: ["$course.category", "General"] },
+            // Support both old and new field names
+            amount: { $ifNull: ["$estimatedCost", "$amount", "$course.cost", 0] },
+            estimatedCost: { $ifNull: ["$estimatedCost", "$course.cost", 0] },
+            reason: { $ifNull: ["$description", "$reason", "No description provided"] },
+            description: { $ifNull: ["$description", "$reason", "No description provided"] },
             careerGoals: 1,
             timeline: 1,
             additionalInfo: 1,
+            urgency: 1,
+            documents: { $ifNull: ["$documents", {}] },
             status: 1,
+            submissionDate: 1,
             createdAt: 1,
             updatedAt: 1,
           },

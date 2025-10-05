@@ -15,8 +15,52 @@ export async function GET() {
     const db = await getDatabase()
     const requests = await db
       .collection("courseRequests")
-      .find({})
-      .sort({ createdAt: -1 })
+      .aggregate([
+        {
+          $lookup: {
+            from: "users",
+            localField: "studentId",
+            foreignField: "_id",
+            as: "student",
+          },
+        },
+        {
+          $unwind: {
+            path: "$student",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            studentId: 1,
+            studentName: { $ifNull: ["$student.name", "$studentName"] },
+            studentEmail: { $ifNull: ["$student.email", "$studentEmail"] },
+            courseName: { $ifNull: ["$title", "$courseName", "Unknown Course"] },
+            title: { $ifNull: ["$title", "$courseName", "Unknown Course"] },
+            provider: { $ifNull: ["$provider", "Unknown Provider"] },
+            description: { $ifNull: ["$description", "$justification", "No description provided"] },
+            category: { $ifNull: ["$category", "General"] },
+            cost: { $ifNull: ["$price", "$cost", 0] },
+            price: { $ifNull: ["$price", "$cost", 0] },
+            duration: { $ifNull: ["$duration", "Not specified"] },
+            certificationType: 1,
+            url: 1,
+            justification: 1,
+            careerRelevance: 1,
+            timeline: 1,
+            documents: 1,
+            status: 1,
+            reviewNote: 1,
+            submissionDate: 1,
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        },
+        {
+          $sort: { createdAt: -1 },
+        },
+      ])
       .toArray()
 
     return NextResponse.json(requests)

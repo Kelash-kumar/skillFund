@@ -25,6 +25,7 @@ const donorNavItems = [
 const adminNavItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: Home },
   { href: "/admin/applications", label: "Applications", icon: BookOpen },
+  { href: "/admin/courses", label: "Courses", icon: BookOpen },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/profile", label: "Profile", icon: User },
 ]

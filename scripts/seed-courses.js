@@ -1,7 +1,7 @@
 // Seed initial courses data
 const { MongoClient } = require("mongodb")
 
-const uri = process.env.MONGODB_URI || "mongodb+srv://kelashraisal_db_user:IDXX84Pd5ib19j1R@cluster0.7umhbjx.mongodb.net/"
+const uri = process.env.MONGODB_URI || "mongodb+srv://jawadsoomro:JawadsPassword123@cluster0.jlqp0dn.mongodb.net/"
 const dbName = "scholarfund"
 
 const sampleCourses = [
