@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     // Get donation statistics
     const [totalDonatedResult, studentsSupported, coursesCompleted, activeSponsorship] = await Promise.all([
       db
-        .collection("donations")
+        .collection("donationBank")
         .aggregate([
           { $match: { donorId, status: "completed" } },
           { $group: { _id: null, totalDonated: { $sum: "$amount" } } },

@@ -117,7 +117,7 @@ export default function DonorDonationsPage() {
                       <DollarSign className="h-4 w-4 mr-1" />
                       {d.amount.toLocaleString()}
                     </div>
-                    <Badge variant={d.status === "completed" ? "default" : "secondary"} className="mt-1">
+                    <Badge variant={d.status === "completed" ? "default" : d.status === "refunded" ? "destructive" : "secondary"} className="mt-1">
                       {d.status}
                     </Badge>
                   </div>

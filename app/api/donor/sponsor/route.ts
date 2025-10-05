@@ -81,6 +81,15 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     })
 
+    // Update donor's total donations
+    await db.collection("users").updateOne(
+      { _id: new ObjectId(session.user.id) },
+      {
+        $inc: { totalDonated: Number(amount) },
+        $set: { updatedAt: new Date() },
+      },
+    )
+
     // Check if application is now fully funded
     const newTotalFunded = currentFunded + amount
     if (newTotalFunded >= application.amount) {

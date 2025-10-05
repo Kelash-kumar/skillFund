@@ -135,9 +135,9 @@ export default function DonorDashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="w-full gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="border-border bg-card">
-            <CardHeader className="flex flex-row items-center space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-foreground-muted">Total Donated</CardTitle>
               <DollarSign className="h-4 w-4 text-primary" />
             </CardHeader>
@@ -145,9 +145,33 @@ export default function DonorDashboard() {
               <div className="text-2xl font-bold text-foreground">${stats.totalDonated.toLocaleString()}</div>
             </CardContent>
           </Card>
-
-      
-
+          <Card className="border-border bg-card">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-foreground-muted">Students Supported</CardTitle>
+              <Users className="h-4 w-4 text-foreground-muted" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">{stats.studentsSupported}</div>
+            </CardContent>
+          </Card>
+          <Card className="border-border bg-card">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-foreground-muted">Certifications Earned</CardTitle>
+              <Award className="h-4 w-4 text-accent" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">{stats.coursesCompleted}</div>
+            </CardContent>
+          </Card>
+          <Card className="border-border bg-card">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-foreground-muted">Active Sponsorships</CardTitle>
+              <Gift className="h-4 w-4 text-secondary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">{stats.activeSponsorship}</div>
+            </CardContent>
+          </Card>
         </div>
 
      

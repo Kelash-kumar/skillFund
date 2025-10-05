@@ -155,11 +155,35 @@ export default function PaymentPage() {
                     <SelectValue placeholder="Select payment method" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="stripe">Credit/Debit Card (Stripe)</SelectItem>
+                    <SelectItem value="stripe">Credit/Debit Card (Stripe - Test)</SelectItem>
                     <SelectItem value="paypal">PayPal</SelectItem>
                     <SelectItem value="bank">Bank Transfer</SelectItem>
                   </SelectContent>
                 </Select>
+
+                {paymentMethod === "stripe" && (
+                  <div className="space-y-3 border rounded-md p-4 bg-background">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="card-number">Card Number</Label>
+                        <Input id="card-number" placeholder="4242 4242 4242 4242" defaultValue="4242 4242 4242 4242" />
+                      </div>
+                      <div>
+                        <Label htmlFor="card-name">Name on Card</Label>
+                        <Input id="card-name" placeholder="JOHN DOE" />
+                      </div>
+                      <div>
+                        <Label htmlFor="exp">Expiry (MM/YY)</Label>
+                        <Input id="exp" placeholder="12/34" defaultValue="12/34" />
+                      </div>
+                      <div>
+                        <Label htmlFor="cvc">CVC</Label>
+                        <Input id="cvc" placeholder="123" defaultValue="123" />
+                      </div>
+                    </div>
+                    <p className="text-xs text-foreground-muted">Use Stripe test card 4242 4242 4242 4242 with any future expiry and any CVC.</p>
+                  </div>
+                )}
 
                 <div className="flex items-center gap-2 text-sm text-foreground-muted">
                   <Shield className="h-4 w-4" />
