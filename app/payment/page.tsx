@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -21,11 +21,65 @@ export default function PaymentPage() {
   const [message, setMessage] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
 
+  // Saved payment methods
+  const [savedMethods, setSavedMethods] = useState<any[]>([])
+  const [selectedSavedId, setSelectedSavedId] = useState<string>("")
+  const [saveCard, setSaveCard] = useState<boolean>(true)
+
+  // Dummy card/bank form fields (do NOT store these in real systems!)
+  const [cardNumber, setCardNumber] = useState("4242 4242 4242 4242")
+  const [cardName, setCardName] = useState("")
+  const [exp, setExp] = useState("12/34")
+  const [cvc, setCvc] = useState("123")
+  const [bankName, setBankName] = useState("")
+  const [bankAccountNumber, setBankAccountNumber] = useState("")
+  const [routingNumber, setRoutingNumber] = useState("")
+
+  useEffect(() => {
+    // Load saved methods for donor
+    async function loadSaved() {
+      try {
+        const res = await fetch("/api/payment/methods")
+        if (res.ok) {
+          const data = await res.json()
+          setSavedMethods(data)
+        }
+      } catch (e) {
+        console.error("Failed to load saved methods", e)
+      }
+    }
+    loadSaved()
+  }, [])
+
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsProcessing(true)
 
     try {
+      let methodId = selectedSavedId
+
+      // Save new card if requested and no saved method selected
+      if (paymentMethod === "stripe" && saveCard && !methodId) {
+        const saveRes = await fetch("/api/payment/methods", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "card",
+            cardNumber,
+            nameOnCard: cardName,
+            exp,
+            cvc,
+            bankName,
+            bankAccountNumber,
+            routingNumber,
+          }),
+        })
+        if (saveRes.ok) {
+          const saved = await saveRes.json()
+          methodId = saved._id
+        }
+      }
+
       const response = await fetch("/api/payment/process", {
         method: "POST",
         headers: {
@@ -35,7 +89,7 @@ export default function PaymentPage() {
           amount: Number.parseFloat(amount),
           paymentMethod,
           message,
-          donorId: session?.user?.id,
+          savedPaymentMethodId: methodId || undefined,
         }),
       })
 
@@ -150,38 +204,78 @@ export default function PaymentPage() {
                 <CardDescription>Choose how you'd like to make your donation</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                <Select value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v); }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select payment method" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="stripe">Credit/Debit Card (Stripe - Test)</SelectItem>
-                    <SelectItem value="paypal">PayPal</SelectItem>
-                    <SelectItem value="bank">Bank Transfer</SelectItem>
+                    <SelectItem value="stripe">Credit/Debit Card</SelectItem>
+                    <SelectItem value="null" disabled={true}>Other options coming soon..</SelectItem>
+                    {/* <SelectItem value="paypal">PayPal</SelectItem>
+                    <SelectItem value="bank">Bank Transfer</SelectItem> */}
                   </SelectContent>
                 </Select>
 
                 {paymentMethod === "stripe" && (
-                  <div className="space-y-3 border rounded-md p-4 bg-background">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-4 border rounded-md p-4 bg-background">
+                    {savedMethods.length > 0 && (
                       <div>
+                        <Label htmlFor="saved-method">Use Saved Card</Label>
+                        <Select value={selectedSavedId} onValueChange={setSelectedSavedId}>
+                          <SelectTrigger id="saved-method">
+                            <SelectValue placeholder="Select saved card (optional)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {savedMethods.map((m) => (
+                              <SelectItem key={m._id} value={m._id}>
+                                {m.label || `${m.brand || "Card"} **** ${m.last4 || "****"}${m.exp ? ` (${m.exp})` : ""}`}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div >
                         <Label htmlFor="card-number">Card Number</Label>
-                        <Input id="card-number" placeholder="4242 4242 4242 4242" defaultValue="4242 4242 4242 4242" />
+                        <Input id="card-number" className="my-2" placeholder="4242 4242 4242 4242" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} />
                       </div>
                       <div>
                         <Label htmlFor="card-name">Name on Card</Label>
-                        <Input id="card-name" placeholder="JOHN DOE" />
+                        <Input id="card-name" className="my-2" placeholder="JOHN DOE" value={cardName} onChange={(e) => setCardName(e.target.value)} />
                       </div>
                       <div>
                         <Label htmlFor="exp">Expiry (MM/YY)</Label>
-                        <Input id="exp" placeholder="12/34" defaultValue="12/34" />
+                        <Input id="exp" className="my-2" placeholder="12/34" value={exp} onChange={(e) => setExp(e.target.value)} />
                       </div>
                       <div>
                         <Label htmlFor="cvc">CVC</Label>
-                        <Input id="cvc" placeholder="123" defaultValue="123" />
+                        <Input id="cvc" className="my-2" placeholder="123" value={cvc} onChange={(e) => setCvc(e.target.value)} />
                       </div>
                     </div>
-                    <p className="text-xs text-foreground-muted">Use Stripe test card 4242 4242 4242 4242 with any future expiry and any CVC.</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div>
+                        <Label htmlFor="bank-name">Bank Name (Optional)</Label>
+                        <Input className="my-2" id="bank-name" placeholder="Test Bank" value={bankName} onChange={(e) => setBankName(e.target.value)} />
+                      </div>
+                      <div>
+                        <Label htmlFor="acct">Account Number (Optional)</Label>
+                        <Input className="my-2" id="acct" placeholder="000123456789" value={bankAccountNumber} onChange={(e) => setBankAccountNumber(e.target.value)} />
+                      </div>
+                      <div>
+                        <Label htmlFor="routing">Routing Number (Optional)</Label>
+                        <Input className="my-2" id="routing" placeholder="110000000" value={routingNumber} onChange={(e) => setRoutingNumber(e.target.value)} />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input id="save-card" type="checkbox" checked={saveCard} onChange={(e) => setSaveCard(e.target.checked)} />
+                      <Label htmlFor="save-card">Save this card for future donations</Label>
+                    </div>
+
+                    <p className="text-xs text-foreground-muted">Use Stripe test card 4242 4242 4242 4242 with any future expiry and any CVC. This is a simulation; no real payment is processed.</p>
                   </div>
                 )}
 

@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { amount, paymentMethod, message, studentId } = await request.json()
+    const { amount, paymentMethod, message, studentId, savedPaymentMethodId } = await request.json()
 
     if (!amount || amount <= 0) {
       return NextResponse.json({ error: "Invalid amount" }, { status: 400 })
@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
       studentId: studentId ? new ObjectId(studentId) : null,
       amount: Number.parseFloat(amount),
       paymentMethod,
+      savedPaymentMethodId: savedPaymentMethodId ? new ObjectId(savedPaymentMethodId) : null,
       message: message || "",
       status: "completed", // In real app, this would be "pending" until payment processor confirms
       createdAt: new Date(),
@@ -34,6 +35,19 @@ export async function POST(request: NextRequest) {
 
     const result = await db.collection("payments").insertOne(payment)
 
+    // Also create a general donation record for donor history consistency
+    const donation = {
+      donorId: new ObjectId(session.user.id),
+      applicationId: null,
+      amount: Number.parseFloat(amount),
+      type: "general",
+      status: "completed",
+      paymentId: result.insertedId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+    await db.collection("donations").insertOne(donation)
+
     // Record in DonationBank (ledger)
     await db.collection("donationBank").insertOne({
       donorId: new ObjectId(session.user.id),
@@ -41,6 +55,7 @@ export async function POST(request: NextRequest) {
       source: "payment",
       paymentId: result.insertedId,
       studentId: studentId ? new ObjectId(studentId) : null,
+      savedPaymentMethodId: savedPaymentMethodId ? new ObjectId(savedPaymentMethodId) : null,
       status: "completed",
       paymentMethod,
       message: message || "",
