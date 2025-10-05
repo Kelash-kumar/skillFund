@@ -14,7 +14,7 @@ export default function AboutPage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <BookOpen className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold text-foreground">ScholarFund</span>
+            <span className="text-2xl font-bold text-foreground">SkillFund</span>
           </div>
           <nav className="hidden md:flex items-center space-x-6">
             <Link href="/courses" className="text-foreground-muted hover:text-foreground transition-colors">Courses</Link>
@@ -30,7 +30,7 @@ export default function AboutPage() {
           <Badge className="mb-4 bg-accent/10 text-accent border-accent/20">Our Mission</Badge>
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Empowering Education Through Community</h1>
           <p className="text-lg text-foreground-muted max-w-3xl mx-auto">
-            ScholarFund connects motivated students with generous donors to unlock access to professional courses,
+            SkillFund connects motivated students with generous donors to unlock access to professional courses,
             certifications, and life-changing opportunities.
           </p>
         </section>

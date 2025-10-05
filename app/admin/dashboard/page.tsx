@@ -126,7 +126,7 @@ export default function AdminDashboard() {
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">Admin Dashboard</h1>
-          <p className="text-xl text-foreground-muted">Manage the ScholarFund platform and monitor key metrics</p>
+          <p className="text-xl text-foreground-muted">Manage the SkillFund platform and monitor key metrics</p>
         </div>
 
         {/* Stats Grid */}
@@ -234,7 +234,7 @@ export default function AdminDashboard() {
             </Card>
           </Link>
 
-          <Link href="/admin/analytics">
+          <Link href="/analytics">
             <Card className="border-border bg-card hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader>
                 <div className="flex items-center space-x-3">

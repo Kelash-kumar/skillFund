@@ -30,6 +30,10 @@ export default withAuth(
         if (pathname.startsWith("/admin/") && token?.userType !== "admin") {
           return false
         }
+        // Protect analytics page for admin only
+        if (pathname.startsWith("/analytics") && token?.userType !== "admin") {
+          return false
+        }
 
         return !!token
       },

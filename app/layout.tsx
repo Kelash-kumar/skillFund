@@ -8,7 +8,7 @@ import { Providers } from "@/components/providers"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "ScholarFund - Empowering Education Through Community Funding",
+  title: "SkillFund - Empowering Education Through Community Funding",
   description:
     "Connect students with donors to fund educational opportunities. Apply for course funding, discover learning paths, and make a difference in education.",
   generator: "v0.app",

@@ -120,7 +120,7 @@ export default function StudentDashboard() {
           <div className="flex items-center space-x-2">
             <Link href="/" className="flex items-center space-x-2">
               <BookOpen className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold text-foreground">ScholarFund</span>
+              <span className="text-2xl font-bold text-foreground">SkillFund</span>
             </Link>
           </div>
           <nav className="hidden md:flex items-center space-x-6">

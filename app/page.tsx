@@ -12,7 +12,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <BookOpen className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold text-foreground">ScholarFund</span>
+            <span className="text-2xl font-bold text-foreground">SkillFund</span>
           </div>
           <nav className="hidden md:flex items-center space-x-6">
             <Link href="/courses" className="text-foreground-muted hover:text-foreground transition-colors">
@@ -46,7 +46,7 @@ export default function HomePage() {
           </Badge>
           <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6 text-balance">
             Fund Your Future with
-            <span className="text-primary"> ScholarFund</span>
+            <span className="text-primary"> SkillFund</span>
           </h1>
           <p className="text-xl text-foreground-muted mb-8 max-w-3xl mx-auto text-pretty">
             Connect students with donors to access funding for professional courses and certifications. Build your
@@ -101,7 +101,7 @@ export default function HomePage() {
       <section className="py-20 bg-background-secondary">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-foreground mb-4">How ScholarFund Works</h2>
+            <h2 className="text-4xl font-bold text-foreground mb-4">How SkillFund Works</h2>
             <p className="text-xl text-foreground-muted max-w-2xl mx-auto">
               A transparent platform connecting students, donors, and educational opportunities
             </p>
@@ -283,7 +283,7 @@ export default function HomePage() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <BookOpen className="h-6 w-6 text-primary" />
-                <span className="text-xl font-bold text-foreground">ScholarFund</span>
+                <span className="text-xl font-bold text-foreground">SkillFund</span>
               </div>
               <p className="text-foreground-muted text-sm">
                 Empowering students through community-funded education and professional development.
@@ -351,7 +351,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-border mt-8 pt-8 text-center text-sm text-foreground-muted">
-            <p>&copy; 2025 ScholarFund. All rights reserved.</p>
+            <p>&copy; 2025 SkillFund. All rights reserved.</p>
           </div>
         </div>
       </footer>

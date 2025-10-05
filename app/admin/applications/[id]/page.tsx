@@ -97,6 +97,7 @@ export default function ApplicationDetailsPage() {
   const [purchasePrice, setPurchasePrice] = useState<string>("")
   const [isLoading, setIsLoading] = useState(true)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [processingAction, setProcessingAction] = useState<"approve" | "reject" | null>(null)
   const [applicationType, setApplicationType] = useState<"application" | "course-request" | null>(null)
 
   useEffect(() => {
@@ -178,6 +179,7 @@ export default function ApplicationDetailsPage() {
       }
     }
 
+    setProcessingAction(action)
     setIsProcessing(true)
     try {
       const endpoint = applicationType === "application" 
@@ -231,6 +233,7 @@ export default function ApplicationDetailsPage() {
       })
     } finally {
       setIsProcessing(false)
+      setProcessingAction(null)
     }
   }
 
@@ -604,7 +607,7 @@ export default function ApplicationDetailsPage() {
             <div className="flex items-center space-x-2">
               <Link href="/" className="flex items-center space-x-2">
                 <BookOpen className="h-8 w-8 text-primary" />
-                <span className="text-2xl font-bold text-foreground">ScholarFund</span>
+                <span className="text-2xl font-bold text-foreground">SkillFund</span>
               </Link>
               <Badge variant="secondary" className="ml-2">
                 Admin
@@ -925,7 +928,7 @@ export default function ApplicationDetailsPage() {
                       className="bg-green-600 hover:bg-green-700"
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      {isProcessing ? "Processing..." : "Approve"}
+                      {isProcessing && processingAction === "approve" ? "Approving..." : "Approve"}
                     </Button>
                     <Button
                       onClick={() => handleApplicationAction("reject")}
@@ -933,7 +936,7 @@ export default function ApplicationDetailsPage() {
                       variant="destructive"
                     >
                       <XCircle className="h-4 w-4 mr-2" />
-                      {isProcessing ? "Processing..." : "Reject"}
+                      {isProcessing && processingAction === "reject" ? "Rejecting..." : "Reject"}
                     </Button>
                   </div>
                 </CardContent>

@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse(csvContent, {
       headers: {
         "Content-Type": "text/csv",
-        "Content-Disposition": `attachment; filename="scholarfund-analytics-${range}.csv"`,
+        "Content-Disposition": `attachment; filename="SkillFund-analytics-${range}.csv"`,
       },
     })
   } catch (error) {

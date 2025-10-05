@@ -59,7 +59,7 @@ export function Navigation() {
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
             <BookOpen className="h-5 w-5 text-primary-foreground" />
           </div>
-          ScholarFund
+          SkillFund
         </Link>
       </div>
 
@@ -122,7 +122,7 @@ export function Navigation() {
             <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
               <BookOpen className="h-4 w-4 text-primary-foreground" />
             </div>
-            ScholarFund
+            SkillFund
           </Link>
 
           <Sheet open={isOpen} onOpenChange={setIsOpen}>

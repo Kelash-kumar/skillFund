@@ -65,15 +65,15 @@ export default function PaymentSuccessPage() {
                   variant="outline"
                   onClick={() => {
                     navigator.share?.({
-                      title: "I just donated to ScholarFund!",
-                      text: "Join me in supporting student education on ScholarFund",
+                      title: "I just donated to SkillFund!",
+                      text: "Join me in supporting student education on SkillFund",
                       url: window.location.origin,
                     }) || navigator.clipboard.writeText(window.location.origin)
                   }}
                   className="w-full"
                 >
                   <Share2 className="h-4 w-4 mr-2" />
-                  Share ScholarFund
+                  Share SkillFund
                 </Button>
               </div>
             </CardContent>

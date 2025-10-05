@@ -54,6 +54,26 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: "jwt",
+    // Keep users logged in across restarts: long-lived session with rolling updates
+    maxAge: 60 * 60 * 24 * 180, // 180 days
+    updateAge: 60 * 60 * 24, // update session cookie every 24h of activity
+  },
+  jwt: {
+    maxAge: 60 * 60 * 24 * 180, // 180 days for the JWT itself
+  },
+  cookies: {
+    sessionToken: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-next-auth.session-token"
+          : "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
   },
   callbacks: {
     async jwt({ token, user }) {

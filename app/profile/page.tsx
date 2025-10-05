@@ -159,25 +159,32 @@ function ProfileContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Profile Settings</h1>
-          <p className="text-slate-600">Manage your account information and preferences</p>
+     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-slate-100 py-10">
+      <div className="container mx-auto px-4 max-w-5xl">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <h1 className="text-4xl font-bold text-slate-800">
+            Profile Settings
+          </h1>
+          <p className="text-slate-500 mt-2">
+            Manage your personal information, preferences, and visibility
+          </p>
         </div>
 
-        <div className="space-y-6">
-          {/* Basic Information */}
-          <Card className="border-0 shadow-sm">
+        <div className="space-y-8">
+          {/* Basic Info */}
+          <Card className="border border-slate-200 shadow-md backdrop-blur-sm bg-white/70 hover:shadow-lg transition">
             <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5" />
                 Basic Information
               </CardTitle>
-              <CardDescription className="text-blue-100">Your account details and contact information</CardDescription>
+              <CardDescription className="text-blue-100">
+                Your personal and contact details
+              </CardDescription>
             </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="p-6 space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <Label htmlFor="name">Full Name</Label>
                   <Input
@@ -198,10 +205,14 @@ function ProfileContent() {
                   />
                 </div>
               </div>
+
               <div>
                 <Label>Account Type</Label>
                 <div className="mt-1">
-                  <Badge variant="secondary" className="capitalize">
+                  <Badge
+                    variant="secondary"
+                    className="capitalize px-3 py-1 bg-blue-100 text-blue-700"
+                  >
                     {profile.userType}
                   </Badge>
                 </div>
@@ -209,35 +220,38 @@ function ProfileContent() {
             </CardContent>
           </Card>
 
-          {/* Student Profile */}
+          {/* Student Section */}
           {profile.userType === "student" && (
-            <Card className="border-0 shadow-sm">
+            <Card className="border border-emerald-200 shadow-md bg-white/70 backdrop-blur-sm hover:shadow-lg transition">
               <CardHeader className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-t-lg">
                 <CardTitle>Student Profile</CardTitle>
                 <CardDescription className="text-emerald-100">
-                  Your educational background and career information
+                  Educational details and certifications
                 </CardDescription>
               </CardHeader>
-              <CardContent className="p-6 space-y-4">
+              <CardContent className="p-6 space-y-5">
                 <div>
                   <Label htmlFor="education">Educational Background</Label>
                   <Textarea
                     id="education"
-                    value={profile.profile?.education || ""}
-                    onChange={(e) => updateProfile("profile.education", e.target.value)}
-                    placeholder="Describe your educational background, current studies, or degrees..."
-                    className="mt-1"
+                    value={profile.profile.education}
+                    onChange={(e) =>
+                      updateProfile("profile.education", e.target.value)
+                    }
+                    placeholder="Describe your studies or degrees..."
                     rows={3}
                   />
                 </div>
+
                 <div>
                   <Label htmlFor="careerGoals">Career Goals</Label>
                   <Textarea
                     id="careerGoals"
-                    value={profile.profile?.careerGoals || ""}
-                    onChange={(e) => updateProfile("profile.careerGoals", e.target.value)}
-                    placeholder="What are your career aspirations and goals..."
-                    className="mt-1"
+                    value={profile.profile.careerGoals}
+                    onChange={(e) =>
+                      updateProfile("profile.careerGoals", e.target.value)
+                    }
+                    placeholder="What are your career goals?"
                     rows={3}
                   />
                 </div>
@@ -247,27 +261,34 @@ function ProfileContent() {
                 <div>
                   <Label>Completed Certifications</Label>
                   <div className="mt-2 space-y-2">
-                    {profile.profile?.completedCertifications?.map((cert: string, index: number) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <Badge variant="outline" className="flex-1 justify-between">
-                          {cert}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeCertification(index)}
-                            className="h-4 w-4 p-0 ml-2"
+                    {profile.profile.completedCertifications.map(
+                      (cert, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className="flex-1 justify-between text-slate-700 border-slate-300"
                           >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </Badge>
-                      </div>
-                    ))}
+                            {cert}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeCertification(index)}
+                              className="h-4 w-4 p-0 ml-2 text-slate-500 hover:text-red-500"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </Badge>
+                        </div>
+                      )
+                    )}
                     <div className="flex gap-2">
                       <Input
                         value={newCertification}
                         onChange={(e) => setNewCertification(e.target.value)}
                         placeholder="Add a certification..."
-                        onKeyPress={(e) => e.key === "Enter" && addCertification()}
+                        onKeyPress={(e) =>
+                          e.key === "Enter" && addCertification()
+                        }
                       />
                       <Button onClick={addCertification} size="sm">
                         <Plus className="h-4 w-4" />
@@ -283,30 +304,33 @@ function ProfileContent() {
                     <Label htmlFor="portfolio">Portfolio URL</Label>
                     <Input
                       id="portfolio"
-                      value={profile.profile?.portfolio || ""}
-                      onChange={(e) => updateProfile("profile.portfolio", e.target.value)}
+                      value={profile.profile.portfolio}
+                      onChange={(e) =>
+                        updateProfile("profile.portfolio", e.target.value)
+                      }
                       placeholder="https://yourportfolio.com"
-                      className="mt-1"
                     />
                   </div>
                   <div>
                     <Label htmlFor="linkedin">LinkedIn Profile</Label>
                     <Input
                       id="linkedin"
-                      value={profile.profile?.linkedIn || ""}
-                      onChange={(e) => updateProfile("profile.linkedIn", e.target.value)}
+                      value={profile.profile.linkedIn}
+                      onChange={(e) =>
+                        updateProfile("profile.linkedIn", e.target.value)
+                      }
                       placeholder="https://linkedin.com/in/username"
-                      className="mt-1"
                     />
                   </div>
                   <div>
                     <Label htmlFor="github">GitHub Profile</Label>
                     <Input
                       id="github"
-                      value={profile.profile?.github || ""}
-                      onChange={(e) => updateProfile("profile.github", e.target.value)}
+                      value={profile.profile.github}
+                      onChange={(e) =>
+                        updateProfile("profile.github", e.target.value)
+                      }
                       placeholder="https://github.com/username"
-                      className="mt-1"
                     />
                   </div>
                 </div>
@@ -314,44 +338,47 @@ function ProfileContent() {
             </Card>
           )}
 
-          {/* Donor Profile */}
+          {/* Donor Section */}
           {profile.userType === "donor" && (
             <>
-              <Card className="border-0 shadow-sm">
+              <Card className="border border-purple-200 shadow-md bg-white/70 hover:shadow-lg transition">
                 <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-t-lg">
                   <CardTitle className="flex items-center gap-2">
-                    <Building className="h-5 w-5" />
-                    Donor Profile
+                    <Building className="h-5 w-5" /> Donor Profile
                   </CardTitle>
                   <CardDescription className="text-purple-100">
-                    Your company information and donation preferences
+                    Company information and interest areas
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="p-6 space-y-4">
+                <CardContent className="p-6 space-y-5">
                   <div>
-                    <Label htmlFor="company">Company/Organization</Label>
+                    <Label htmlFor="company">Company / Organization</Label>
                     <Input
                       id="company"
-                      value={profile.profile?.company || ""}
-                      onChange={(e) => updateProfile("profile.company", e.target.value)}
-                      placeholder="Your company or organization name"
-                      className="mt-1"
+                      value={profile.profile.company}
+                      onChange={(e) =>
+                        updateProfile("profile.company", e.target.value)
+                      }
+                      placeholder="Enter organization name"
                     />
                   </div>
 
                   <div>
                     <Label>Areas of Interest</Label>
                     <div className="mt-2 space-y-2">
-                      {profile.profile?.interests?.map((interest: string, index: number) => (
+                      {profile.profile.interests.map((interest, index) => (
                         <div key={index} className="flex items-center gap-2">
-                          <Badge variant="outline" className="flex-1 justify-between">
-                            <Heart className="h-3 w-3 mr-1" />
+                          <Badge
+                            variant="outline"
+                            className="flex-1 justify-between border-slate-300"
+                          >
+                            <Heart className="h-3 w-3 mr-1 text-pink-600" />
                             {interest}
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => removeInterest(index)}
-                              className="h-4 w-4 p-0 ml-2"
+                              className="h-4 w-4 p-0 ml-2 text-slate-500 hover:text-red-500"
                             >
                               <X className="h-3 w-3" />
                             </Button>
@@ -362,8 +389,10 @@ function ProfileContent() {
                         <Input
                           value={newInterest}
                           onChange={(e) => setNewInterest(e.target.value)}
-                          placeholder="Add an interest area..."
-                          onKeyPress={(e) => e.key === "Enter" && addInterest()}
+                          placeholder="Add interest..."
+                          onKeyPress={(e) =>
+                            e.key === "Enter" && addInterest()
+                          }
                         />
                         <Button onClick={addInterest} size="sm">
                           <Plus className="h-4 w-4" />
@@ -374,61 +403,67 @@ function ProfileContent() {
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-sm">
+              <Card className="border border-amber-200 shadow-md bg-white/70 hover:shadow-lg transition">
                 <CardHeader className="bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-t-lg">
                   <CardTitle className="flex items-center gap-2">
-                    <DollarSign className="h-5 w-5" />
-                    Donation Preferences
+                    <DollarSign className="h-5 w-5" /> Donation Preferences
                   </CardTitle>
                   <CardDescription className="text-amber-100">
-                    Configure your donation settings and preferences
+                    Customize your donation settings
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="p-6 space-y-4">
+                <CardContent className="p-6 space-y-5">
                   <div>
-                    <Label htmlFor="maxAmount">Maximum Donation Amount (Optional)</Label>
+                    <Label htmlFor="maxAmount">
+                      Maximum Donation Amount
+                    </Label>
                     <Input
                       id="maxAmount"
                       type="number"
-                      value={profile.profile?.donationPreferences?.maxAmount || ""}
+                      value={profile.profile.donationPreferences.maxAmount}
                       onChange={(e) =>
                         updateProfile(
-                          "donationPreferences.maxAmount",
-                          e.target.value ? Number(e.target.value) : undefined,
+                          "profile.donationPreferences.maxAmount",
+                          Number(e.target.value)
                         )
                       }
-                      placeholder="Enter maximum amount per donation"
-                      className="mt-1"
+                      placeholder="Enter amount"
                     />
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="recurring">Recurring Donations</Label>
-                      <p className="text-sm text-muted-foreground">Enable automatic recurring donations</p>
+                      <Label>Recurring Donations</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Enable automatic recurring donations
+                      </p>
                     </div>
                     <Switch
-                      id="recurring"
-                      checked={profile.profile?.donationPreferences?.recurring || false}
-                      onCheckedChange={(checked) => updateProfile("donationPreferences.recurring", checked)}
+                      checked={profile.profile.donationPreferences.recurring}
+                      onCheckedChange={(checked) =>
+                        updateProfile("profile.donationPreferences.recurring", checked)
+                      }
                     />
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="anonymous">Anonymous Donations</Label>
-                      <p className="text-sm text-muted-foreground">Keep your donations anonymous to recipients</p>
+                      <Label>Anonymous Donations</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Keep your donations private
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      {profile.profile?.isAnonymous ? (
+                      {profile.profile.isAnonymous ? (
                         <EyeOff className="h-4 w-4 text-muted-foreground" />
                       ) : (
                         <Eye className="h-4 w-4 text-muted-foreground" />
                       )}
                       <Switch
-                        id="anonymous"
-                        checked={profile.profile?.isAnonymous || false}
-                        onCheckedChange={(checked) => updateProfile("profile.isAnonymous", checked)}
+                        checked={profile.profile.isAnonymous}
+                        onCheckedChange={(checked) =>
+                          updateProfile("profile.isAnonymous", checked)
+                        }
                       />
                     </div>
                   </div>
@@ -437,25 +472,32 @@ function ProfileContent() {
             </>
           )}
 
-          {/* Admin Profile */}
+          {/* Admin Section */}
           {profile.userType === "admin" && (
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-t-lg">
+            <Card className="border border-rose-200 shadow-md bg-white/70">
+              <CardHeader className="bg-gradient-to-r from-red-800 to-rose-600 text-white rounded-t-lg">
                 <CardTitle>Administrator Profile</CardTitle>
-                <CardDescription className="text-red-100">Administrative account settings</CardDescription>
+                <CardDescription className="text-rose-100">
+                  Administrative permissions
+                </CardDescription>
               </CardHeader>
               <CardContent className="p-6">
-                <p className="text-muted-foreground">
-                  As an administrator, you have access to all platform features and analytics. Your basic information is
-                  managed above.
+                <p className="text-slate-600">
+                  As an administrator, you have full access to platform analytics
+                  and settings. Manage general account info above.
                 </p>
               </CardContent>
             </Card>
           )}
 
           {/* Save Button */}
-          <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={saving} size="lg" className="min-w-32">
+          <div className="flex justify-end pt-4">
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              size="lg"
+              className="px-8 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold"
+            >
               {saving ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />

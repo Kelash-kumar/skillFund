@@ -12,7 +12,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-foreground-muted">Loading ScholarFund...</p>
+            <p className="text-foreground-muted">Loading SkillFund...</p>
           </div>
         </div>
       }

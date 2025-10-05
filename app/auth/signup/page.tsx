@@ -109,7 +109,7 @@ export default function SignUpPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2 mb-6">
             <BookOpen className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold text-foreground">ScholarFund</span>
+            <span className="text-2xl font-bold text-foreground">SkillFund</span>
           </Link>
           <h1 className="text-3xl font-bold text-foreground mb-2">Create your account</h1>
           <p className="text-foreground-muted">Join our community and start your journey</p>

@@ -14,7 +14,7 @@ export default function HowItWorksPage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <BookOpen className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold text-foreground">ScholarFund</span>
+            <span className="text-2xl font-bold text-foreground">SkillFund</span>
           </div>
           <nav className="hidden md:flex items-center space-x-6">
             <Link href="/courses" className="text-foreground-muted hover:text-foreground transition-colors">Courses</Link>
@@ -28,7 +28,7 @@ export default function HowItWorksPage() {
         {/* Hero */}
         <section className="text-center mb-12">
           <Badge className="mb-4 bg-accent/10 text-accent border-accent/20">Simple. Transparent. Impactful.</Badge>
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">How ScholarFund Works</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">How SkillFund Works</h1>
           <p className="text-lg text-foreground-muted max-w-3xl mx-auto">
             A step-by-step guide for students and donors to collaborate and fund education.
           </p>
