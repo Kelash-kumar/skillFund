@@ -25,6 +25,7 @@ const adminNavItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: Home },
   { href: "/admin/applications", label: "courseRequests", icon: BookOpen },
   { href: "/admin/courses", label: "Courses", icon: BookOpen },
+  { href: "/admin/donation-bank", label: "Donation Bank", icon: CreditCard },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/profile", label: "Profile", icon: User },
 ]

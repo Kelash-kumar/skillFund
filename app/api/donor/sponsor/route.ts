@@ -69,6 +69,18 @@ export async function POST(request: NextRequest) {
 
     const result = await db.collection("donations").insertOne(donation)
 
+    // Record in DonationBank (ledger)
+    await db.collection("donationBank").insertOne({
+      donorId: new ObjectId(session.user.id),
+      amount: Number(amount),
+      source: "donation",
+      donationId: result.insertedId,
+      applicationId: new ObjectId(applicationId),
+      status: "completed",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+
     // Check if application is now fully funded
     const newTotalFunded = currentFunded + amount
     if (newTotalFunded >= application.amount) {

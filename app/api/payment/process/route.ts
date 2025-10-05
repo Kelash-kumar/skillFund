@@ -34,6 +34,20 @@ export async function POST(request: NextRequest) {
 
     const result = await db.collection("payments").insertOne(payment)
 
+    // Record in DonationBank (ledger)
+    await db.collection("donationBank").insertOne({
+      donorId: new ObjectId(session.user.id),
+      amount: Number.parseFloat(amount),
+      source: "payment",
+      paymentId: result.insertedId,
+      studentId: studentId ? new ObjectId(studentId) : null,
+      status: "completed",
+      paymentMethod,
+      message: message || "",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+
     // Update donor's total donations
     await db.collection("users").updateOne(
       { _id: new ObjectId(session.user.id) },
