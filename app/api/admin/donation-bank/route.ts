@@ -13,22 +13,32 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const donorId = searchParams.get("donorId")
+    const donorIdParam = searchParams.get("donorId")
+    const donorQuery = searchParams.get("donorQuery")?.trim()
     const limit = Number(searchParams.get("limit") || 100)
 
     const db = await getDatabase()
 
-    const match: any = {}
-    if (donorId) {
-      match.donorId = new ObjectId(donorId)
+    let donorId: ObjectId | null = null
+    if (donorIdParam) {
+      try {
+        donorId = new ObjectId(donorIdParam)
+      } catch (e) {
+        donorId = null
+      }
     }
 
-    const transactions = await db
-      .collection("donationBank")
-      .aggregate([
-        { $match: match },
-        { $sort: { createdAt: -1 } },
-        { $limit: limit },
+    // Build pipeline depending on whether we're filtering by donor name/email
+    const pipeline: any[] = []
+
+    // If donorId is valid, always match it first
+    if (donorId) {
+      pipeline.push({ $match: { donorId } })
+    }
+
+    if (donorQuery) {
+      // We need donor info to filter by name/email
+      pipeline.push(
         {
           $lookup: {
             from: "users",
@@ -39,29 +49,63 @@ export async function GET(request: NextRequest) {
         },
         { $unwind: { path: "$donor", preserveNullAndEmptyArrays: true } },
         {
-          $project: {
-            _id: 1,
-            donorId: 1,
-            amount: 1,
-            source: 1,
-            donationId: 1,
-            paymentId: 1,
-            applicationId: 1,
-            studentId: 1,
-            status: 1,
-            paymentMethod: 1,
-            message: 1,
-            createdAt: 1,
-            updatedAt: 1,
-            donor: {
-              _id: "$donor._id",
-              name: "$donor.name",
-              email: "$donor.email",
-            },
+          $match: {
+            $or: [
+              { "donor.name": { $regex: donorQuery, $options: "i" } },
+              { "donor.email": { $regex: donorQuery, $options: "i" } },
+            ],
           },
         },
-      ])
-      .toArray()
+      )
+    } else {
+      // Default path without name/email filter (lookup only for projection)
+      // No-op here; we'll add lookup/unwind later
+    }
+
+    pipeline.push(
+      { $sort: { createdAt: -1 } },
+      { $limit: limit },
+    )
+
+    // Ensure donor is available for projection
+    if (!donorQuery) {
+      pipeline.push(
+        {
+          $lookup: {
+            from: "users",
+            localField: "donorId",
+            foreignField: "_id",
+            as: "donor",
+          },
+        },
+        { $unwind: { path: "$donor", preserveNullAndEmptyArrays: true } },
+      )
+    }
+
+    pipeline.push({
+      $project: {
+        _id: 1,
+        donorId: 1,
+        amount: 1,
+        source: 1,
+        donationId: 1,
+        paymentId: 1,
+        applicationId: 1,
+        studentId: 1,
+        status: 1,
+        paymentMethod: 1,
+        message: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        donor: {
+          _id: "$donor._id",
+          name: "$donor.name",
+          email: "$donor.email",
+        },
+      },
+    })
+
+    const transactions = await db.collection("donationBank").aggregate(pipeline).toArray()
 
     // Normalize _id to string for client
     const normalized = transactions.map((t: any) => ({

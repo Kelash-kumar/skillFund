@@ -12,31 +12,40 @@ export async function GET(request: NextRequest) {
 
     const db = await getDatabase()
 
-    // Overall totals
+    // Overall totals (coerce amount to number; ignore invalid values)
     const [totals] = await db
       .collection("donationBank")
       .aggregate([
         {
           $group: {
             _id: null,
-            totalAmount: { $sum: "$amount" },
+            totalAmount: { $sum: { $convert: { input: "$amount", to: "double", onError: 0, onNull: 0 } } },
             totalTransactions: { $sum: 1 },
           },
         },
       ])
       .toArray()
 
-    // Distinct donor count
-    const donors = await db.collection("donationBank").distinct("donorId")
+    // Distinct donor count (exclude null/undefined)
+    const donorsCountAgg = await db
+      .collection("donationBank")
+      .aggregate([
+        { $match: { donorId: { $type: "objectId" } } },
+        { $group: { _id: "$donorId" } },
+        { $count: "count" },
+      ])
+      .toArray()
+    const donorsCount = donorsCountAgg[0]?.count || 0
 
-    // Top donors by amount
+    // Top donors by amount (exclude null donorId; coerce amount)
     const topDonors = await db
       .collection("donationBank")
       .aggregate([
+        { $match: { donorId: { $type: "objectId" } } },
         {
           $group: {
             _id: "$donorId",
-            total: { $sum: "$amount" },
+            total: { $sum: { $convert: { input: "$amount", to: "double", onError: 0, onNull: 0 } } },
             count: { $sum: 1 },
           },
         },
@@ -63,7 +72,7 @@ export async function GET(request: NextRequest) {
       ])
       .toArray()
 
-    // Last 7 days totals by day
+    // Last 7 days totals by day (coerce amount)
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
@@ -78,7 +87,7 @@ export async function GET(request: NextRequest) {
               m: { $month: "$createdAt" },
               d: { $dayOfMonth: "$createdAt" },
             },
-            total: { $sum: "$amount" },
+            total: { $sum: { $convert: { input: "$amount", to: "double", onError: 0, onNull: 0 } } },
             count: { $sum: 1 },
           },
         },
@@ -87,11 +96,11 @@ export async function GET(request: NextRequest) {
       .toArray()
 
     return NextResponse.json({
-      totalAmount: totals?.totalAmount || 0,
-      totalTransactions: totals?.totalTransactions || 0,
-      donorsCount: donors.length,
+      totalAmount: totals?.totalAmount ?? 0,
+      totalTransactions: totals?.totalTransactions ?? 0,
+      donorsCount,
       topDonors: topDonors.map((d: any) => ({
-        donorId: d.donorId.toString(),
+        donorId: d.donorId?.toString?.() || d.donorId,
         total: d.total,
         count: d.count,
         donor: d.donor,

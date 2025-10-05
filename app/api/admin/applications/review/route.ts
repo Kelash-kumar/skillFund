@@ -12,10 +12,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const { applicationId, action, note } = await request.json()
+    const { applicationId, action, note, purchasePrice } = await request.json()
 
-    if (!applicationId || !action || !["approve", "reject"].includes(action)) {
+    if (!applicationId || !action || ["approve", "reject"].includes(action) === false) {
       return NextResponse.json({ message: "Invalid application ID or action" }, { status: 400 })
+    }
+
+    if (action === "approve") {
+      const priceNum = Number(purchasePrice)
+      if (!purchasePrice || isNaN(priceNum) || priceNum <= 0) {
+        return NextResponse.json({ message: "purchasePrice must be a number greater than 0" }, { status: 400 })
+      }
     }
 
     const db = await getDatabase()
@@ -41,7 +48,26 @@ export async function POST(request: NextRequest) {
       updateData.reviewNote = note
     }
 
+    if (action === "approve") {
+      updateData.approvedAmount = Number(purchasePrice)
+    }
+
     await db.collection("courseRequests").updateOne({ _id: new ObjectId(applicationId) }, { $set: updateData })
+
+    // On approval, deduct from DonationBank by inserting a negative transaction
+    if (action === "approve") {
+      const priceNum = Number(purchasePrice)
+      await db.collection("donationBank").insertOne({
+        amount: -priceNum,
+        source: "application_funding",
+        applicationId: new ObjectId(applicationId),
+        studentId: application.studentId,
+        status: "completed",
+        message: "Funds allocated for approved application",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+    }
 
     return NextResponse.json({ message: `Application ${action}d successfully` }, { status: 200 })
   } catch (error) {

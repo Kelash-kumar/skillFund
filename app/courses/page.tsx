@@ -164,7 +164,7 @@ export default function CoursesPage() {
                 <CardHeader>
                   <div className="flex justify-between items-start mb-2">
                     <Badge variant="secondary" className="text-xs">{course.category}</Badge>
-                    <span className="text-sm font-semibold text-primary">${course.price.toLocaleString()}</span>
+                    <span className="text-sm font-semibold text-primary">${course?.price?.toLocaleString()}</span>
                   </div>
                   <CardTitle className="text-lg text-foreground">{course.title}</CardTitle>
                   <CardDescription className="text-foreground-muted flex items-center">

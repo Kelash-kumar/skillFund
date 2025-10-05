@@ -56,15 +56,44 @@ export default function DonationBankAdminPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, router])
 
+  const isValidObjectId = (v: string) => /^[a-fA-F0-9]{24}$/.test(v)
+
   const fetchAll = async () => {
     setIsLoading(true)
     try {
+      const donorParam = filterDonor && isValidObjectId(filterDonor.trim())
+        ? `donorId=${encodeURIComponent(filterDonor.trim())}`
+        : filterDonor.trim()
+          ? `donorQuery=${encodeURIComponent(filterDonor.trim())}`
+          : ""
+
+      const query = `limit=${limit}${donorParam ? `&${donorParam}` : ""}`
+
       const [statsRes, listRes] = await Promise.all([
-        fetch("/api/admin/donation-bank/stats"),
-        fetch(`/api/admin/donation-bank?limit=${limit}${filterDonor ? `&donorId=${filterDonor}` : ""}`),
+        fetch("/api/admin/donation-bank/stats", { credentials: 'include' }),
+        fetch(`/api/admin/donation-bank?${query}`, { credentials: 'include' }),
       ])
-      if (statsRes.ok) setStats(await statsRes.json())
-      if (listRes.ok) setTransactions(await listRes.json())
+      if (statsRes.ok) {
+        setStats(await statsRes.json())
+      } else {
+        const errText = await statsRes.text().catch(() => "")
+        console.error("Failed to fetch DonationBank stats:", statsRes.status, errText)
+        // Fallback so the page can render instead of being stuck on loading
+        setStats({
+          totalAmount: 0,
+          totalTransactions: 0,
+          donorsCount: 0,
+          topDonors: [],
+          last7Days: [],
+        })
+      }
+      if (listRes.ok) {
+        setTransactions(await listRes.json())
+      } else {
+        const errText = await listRes.text().catch(() => "")
+        console.error("Failed to fetch DonationBank transactions:", listRes.status, errText)
+        setTransactions([])
+      }
     } finally {
       setIsLoading(false)
     }
@@ -151,11 +180,11 @@ export default function DonationBankAdminPage() {
               <CardTitle className="text-foreground flex items-center gap-2">
                 <Filter className="h-4 w-4" /> Filters
               </CardTitle>
-              <CardDescription className="text-foreground-muted">Filter transactions by donor</CardDescription>
+              <CardDescription className="text-foreground-muted">Filter by donor ID, name, or email</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col md:flex-row gap-4">
               <Input
-                placeholder="Filter by Donor ID"
+                placeholder="Donor ID / name / email"
                 value={filterDonor}
                 onChange={(e) => setFilterDonor(e.target.value)}
                 className="md:max-w-sm"

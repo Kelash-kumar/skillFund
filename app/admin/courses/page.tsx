@@ -228,7 +228,7 @@ export default function AdminCoursesPage() {
                           {c.category || "General"}
                         </Badge>
                         <span className="text-sm font-semibold text-primary">
-                          {c.price !== undefined ? `$${c.price.toLocaleString()}` : "Free"}
+                          {c.price !== undefined ? `$${c?.price?.toLocaleString()}` : "Free"}
                         </span>
                       </div>
                       <CardTitle className="text-lg text-foreground line-clamp-2">

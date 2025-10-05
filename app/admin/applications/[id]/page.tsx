@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
+import { Input } from "@/components/ui/input"
 import {
   Dialog,
   DialogContent,
@@ -93,6 +94,7 @@ export default function ApplicationDetailsPage() {
   const { toast } = useToast()
   const [application, setApplication] = useState<UnifiedApplicationDetails | null>(null)
   const [reviewNote, setReviewNote] = useState("")
+  const [purchasePrice, setPurchasePrice] = useState<string>("")
   const [isLoading, setIsLoading] = useState(true)
   const [isProcessing, setIsProcessing] = useState(false)
   const [applicationType, setApplicationType] = useState<"application" | "course-request" | null>(null)
@@ -164,22 +166,38 @@ export default function ApplicationDetailsPage() {
   const handleApplicationAction = async (action: "approve" | "reject") => {
     if (!application) return
 
+    if (action === "approve") {
+      const priceNum = Number(purchasePrice)
+      if (!purchasePrice || isNaN(priceNum) || priceNum <= 0) {
+        toast({
+          title: "Missing or invalid price",
+          description: "Enter a valid purchase price greater than 0 before approving.",
+          variant: "destructive",
+        })
+        return
+      }
+    }
+
     setIsProcessing(true)
     try {
       const endpoint = applicationType === "application" 
         ? "/api/admin/applications/review"
         : "/api/admin/course-requests"
 
+      const priceNum = Number(purchasePrice)
+
       const body = applicationType === "application"
         ? {
             applicationId: application._id,
             action,
             note: reviewNote,
+            ...(action === "approve" ? { purchasePrice: priceNum } : {}),
           }
         : {
             requestId: application._id,
             action,
             note: reviewNote,
+            ...(action === "approve" ? { purchasePrice: priceNum } : {}),
           }
 
       const response = await fetch(endpoint, {
@@ -199,8 +217,10 @@ export default function ApplicationDetailsPage() {
         // Refresh the application data
         fetchApplicationDetails(application._id)
         setReviewNote("")
+        if (action === "approve") setPurchasePrice("")
       } else {
-        throw new Error("Failed to process application")
+        const errText = await response.text().catch(() => "")
+        throw new Error(errText || "Failed to process application")
       }
     } catch (error) {
       console.error("Error processing application:", error)
@@ -877,11 +897,31 @@ export default function ApplicationDetailsPage() {
                       className="min-h-[80px]"
                     />
                   </div>
+
+                  <div>
+                    <label className="text-sm font-semibold text-foreground mb-2 block">
+                      Course Purchase Price (required to approve)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <div className="text-muted-foreground">$</div>
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        value={purchasePrice}
+                        onChange={(e) => setPurchasePrice(e.target.value)}
+                        className="max-w-xs"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">Enter the actual purchase price to be deducted from the DonationBank.</p>
+                  </div>
                   
                   <div className="flex flex-col space-y-2">
                     <Button
                       onClick={() => handleApplicationAction("approve")}
-                      disabled={isProcessing}
+                      disabled={isProcessing || !purchasePrice || isNaN(Number(purchasePrice)) || Number(purchasePrice) <= 0}
                       className="bg-green-600 hover:bg-green-700"
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
