@@ -10,14 +10,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import {
   BookOpen,
   FileText,
   User,
@@ -37,7 +29,6 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
-
 interface UnifiedApplicationDetails {
   _id: string
   studentId: string
@@ -116,9 +107,7 @@ export default function ApplicationDetailsPage() {
   const fetchApplicationDetails = async (id: string) => {
     try {
       setIsLoading(true)
-      console.log('🔍 Fetching application details for ID:', id)
       
-      // Use the unified applications API that handles all request types
       const response = await fetch(`/api/admin/applications/${id}`, {
         credentials: 'include',
         headers: {
@@ -142,7 +131,6 @@ export default function ApplicationDetailsPage() {
         console.log('📝 Application type set to:', data.requestType)
       } else {
         const errorText = await response.text()
-        console.error("❌ Failed to fetch application:", response.status, response.statusText)
         console.error("❌ Error response:", errorText)
         
         toast({
@@ -424,7 +412,7 @@ export default function ApplicationDetailsPage() {
           filename: document.fileName || document.filename || document.originalName || 'unknown',
           originalName: document.originalName || document.fileName || document.filename || 'Unknown Document',
           fileType: document.fileType || document.mimeType || 'application/octet-stream',
-          filePath: document.filePath
+          filePath: document.fileUrl
         }
       }
       return null
@@ -453,28 +441,37 @@ export default function ApplicationDetailsPage() {
     const openDocument = () => {
       try {
         // Use the API route for document access
-        const url = `/api/admin/applications/${applicationId}/documents/${documentType}`
-        window.open(url, '_blank')
+        // const url = `/api/admin/applications/${applicationId}/documents/${documentType}`
+        window.open(document.fileUrl, '_blank')
       } catch (error) {
         console.error('Error opening document:', error)
       }
     }
 
-    const downloadDocument = () => {
-      try {
-        // Use the API route for document download
-        const url = `/api/admin/applications/${applicationId}/documents/${documentType}`
-        const link = document.createElement('a')
-        link.href = url
-        link.download = docInfo.originalName
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-      } catch (error) {
-        console.error('Error downloading document:', error)
-      }
-    }
+    'use client'
 
+const downloadDocument = () => {
+  try {
+    // rename your variable to avoid conflict with the global 'document'
+    const fileUrl = document?.fileUrl 
+    const fileName = document?.originalName || 'download.png'
+
+    // Only run in browser
+    // if (typeof window !== 'undefined') {
+      const link = window.document.createElement('a')
+      link.href = fileUrl
+      link.download = fileName
+
+      // For S3 public URLs, add "target" so browser handles it correctly
+      link.target = '_blank'
+      window.document.body.appendChild(link)
+      link.click()
+      window.document.body.removeChild(link)
+    // }
+  } catch (error) {
+    console.error('Error downloading document:', error)
+  }
+}
     return (
       <Card className="h-full">
         <CardContent className="p-4">

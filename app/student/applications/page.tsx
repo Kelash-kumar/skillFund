@@ -220,6 +220,40 @@ export default function ApplicationsPage() {
 
   return (
     <div className="min-h-screen bg-background">
+       {/* Header */}
+      <header className="border-b border-border bg-card">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Link href="/" className="flex items-center space-x-2">
+              <BookOpen className="h-8 w-8 text-primary" />
+              <span className="text-2xl font-bold text-foreground">SkillFund</span>
+            </Link>
+          </div>
+          <nav className="hidden md:flex items-center space-x-6">
+            <Link href="/student/dashboard" className="text-foreground-muted hover:text-foreground transition-colors">
+              Dashboard
+            </Link>
+            <Link href="/student/courses" className="text-foreground-muted hover:text-foreground transition-colors">
+              Browse Courses
+            </Link>
+            <Link
+              href="/student/applications"
+              className="text-primary font-medium "
+            >
+              My Applications
+            </Link>
+            <Link href="/student/profile" className="text-foreground-muted hover:text-foreground transition-colors">
+              Profile
+            </Link>
+          </nav>
+          <div className="flex items-center space-x-3">
+            <span className="text-sm text-foreground-muted">Welcome, {session?.user?.name}</span>
+            <Button variant="outline" onClick={() => router.push("/api/auth/signout")}>
+              Sign Out
+            </Button>
+          </div>
+        </div>
+      </header>
       <div className="container mx-auto px-4 py-8">
         {/* Page Header */}
         <div className="flex items-center justify-between mb-8">

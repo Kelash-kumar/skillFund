@@ -145,10 +145,8 @@ export async function GET(request: NextRequest) {
       .toArray()
 
 
-      console.log("unified applications ",applications);
     return NextResponse.json(applications)
   } catch (error) {
-    console.error("Error fetching unified applications for admin:", error)
     return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }

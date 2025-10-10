@@ -3,19 +3,42 @@
 import { useEffect, useMemo, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Navigation } from "@/components/navigation"
-import { DollarSign, Users, FileText, Filter, RefreshCcw } from "lucide-react"
+import {
+  DollarSign,
+  Users,
+  FileText,
+  Filter,
+  RefreshCcw,
+} from "lucide-react"
 
 interface BankStats {
   totalAmount: number
   totalTransactions: number
   donorsCount: number
-  topDonors: { donorId: string; total: number; count: number; donor?: { name?: string; email?: string } }[]
+  topDonors: {
+    donorId: string
+    total: number
+    count: number
+    donor?: { name?: string; email?: string }
+  }[]
   last7Days: any[]
 }
 
@@ -53,7 +76,6 @@ export default function DonationBankAdminPage() {
       return
     }
     fetchAll()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, router])
 
   const isValidObjectId = (v: string) => /^[a-fA-F0-9]{24}$/.test(v)
@@ -61,24 +83,22 @@ export default function DonationBankAdminPage() {
   const fetchAll = async () => {
     setIsLoading(true)
     try {
-      const donorParam = filterDonor && isValidObjectId(filterDonor.trim())
-        ? `donorId=${encodeURIComponent(filterDonor.trim())}`
-        : filterDonor.trim()
+      const donorParam =
+        filterDonor && isValidObjectId(filterDonor.trim())
+          ? `donorId=${encodeURIComponent(filterDonor.trim())}`
+          : filterDonor.trim()
           ? `donorQuery=${encodeURIComponent(filterDonor.trim())}`
           : ""
 
       const query = `limit=${limit}${donorParam ? `&${donorParam}` : ""}`
 
       const [statsRes, listRes] = await Promise.all([
-        fetch("/api/admin/donation-bank/stats", { credentials: 'include' }),
-        fetch(`/api/admin/donation-bank?${query}`, { credentials: 'include' }),
+        fetch("/api/admin/donation-bank/stats", { credentials: "include" }),
+        fetch(`/api/admin/donation-bank?${query}`, { credentials: "include" }),
       ])
       if (statsRes.ok) {
         setStats(await statsRes.json())
       } else {
-        const errText = await statsRes.text().catch(() => "")
-        console.error("Failed to fetch DonationBank stats:", statsRes.status, errText)
-        // Fallback so the page can render instead of being stuck on loading
         setStats({
           totalAmount: 0,
           totalTransactions: 0,
@@ -90,8 +110,6 @@ export default function DonationBankAdminPage() {
       if (listRes.ok) {
         setTransactions(await listRes.json())
       } else {
-        const errText = await listRes.text().catch(() => "")
-        console.error("Failed to fetch DonationBank transactions:", listRes.status, errText)
         setTransactions([])
       }
     } finally {
@@ -121,7 +139,9 @@ export default function DonationBankAdminPage() {
   if (status === "loading" || isLoading || !stats) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center text-foreground-muted">Loading Donation Bank...</div>
+        <div className="text-center text-foreground-muted animate-pulse">
+          Loading Donation Bank...
+        </div>
       </div>
     )
   }
@@ -129,58 +149,81 @@ export default function DonationBankAdminPage() {
   return (
     <>
       <Navigation />
-      <div className="lg:pl-64">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-between mb-8">
+      <div className="lg:pl-64 bg-muted/10 min-h-screen">
+        <div className="container mx-auto px-4 py-10">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Donation Bank</h1>
-              <p className="text-foreground-muted">View and manage all donation records across the platform</p>
+              <h1 className="text-4xl font-bold text-foreground mb-1">
+                Donation Bank
+              </h1>
+              <p className="text-foreground-muted">
+                Manage and review all donation transactions
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={fetchAll}>
-                <RefreshCcw className="h-4 w-4 mr-2" /> Refresh
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              onClick={fetchAll}
+              className="mt-4 sm:mt-0"
+            >
+              <RefreshCcw className="h-4 w-4 mr-2" /> Refresh
+            </Button>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card className="border-border bg-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-foreground-muted">Total Collected</CardTitle>
-                <DollarSign className="h-4 w-4 text-primary" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 shadow-sm hover:shadow-md transition-all">
+              <CardHeader className="flex flex-row justify-between items-center pb-2">
+                <CardTitle className="text-sm font-medium text-foreground-muted">
+                  Total Collected
+                </CardTitle>
+                <DollarSign className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-foreground">{totalAmountFormatted}</div>
+                <div className="text-3xl font-bold text-foreground">
+                  {totalAmountFormatted}
+                </div>
               </CardContent>
             </Card>
-            <Card className="border-border bg-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-foreground-muted">Transactions</CardTitle>
-                <FileText className="h-4 w-4 text-accent" />
+
+            <Card className="bg-gradient-to-br from-accent/10 to-accent/5 border border-accent/20 shadow-sm hover:shadow-md transition-all">
+              <CardHeader className="flex flex-row justify-between items-center pb-2">
+                <CardTitle className="text-sm font-medium text-foreground-muted">
+                  Total Transactions
+                </CardTitle>
+                <FileText className="h-5 w-5 text-accent" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-foreground">{stats.totalTransactions.toLocaleString()}</div>
+                <div className="text-3xl font-bold text-foreground">
+                  {stats.totalTransactions.toLocaleString()}
+                </div>
               </CardContent>
             </Card>
-            <Card className="border-border bg-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-foreground-muted">Donors</CardTitle>
-                <Users className="h-4 w-4 text-secondary" />
+
+            <Card className="bg-gradient-to-br from-secondary/10 to-secondary/5 border border-secondary/20 shadow-sm hover:shadow-md transition-all">
+              <CardHeader className="flex flex-row justify-between items-center pb-2">
+                <CardTitle className="text-sm font-medium text-foreground-muted">
+                  Donors
+                </CardTitle>
+                <Users className="h-5 w-5 text-secondary" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-foreground">{stats.donorsCount.toLocaleString()}</div>
+                <div className="text-3xl font-bold text-foreground">
+                  {stats.donorsCount.toLocaleString()}
+                </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Filters */}
-          <Card className="border-border bg-card mb-8">
+          <Card className="border-border bg-card/50 backdrop-blur-sm mb-10 shadow-sm hover:shadow-md transition-all">
             <CardHeader>
-              <CardTitle className="text-foreground flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-foreground">
                 <Filter className="h-4 w-4" /> Filters
               </CardTitle>
-              <CardDescription className="text-foreground-muted">Filter by donor ID, name, or email</CardDescription>
+              <CardDescription className="text-foreground-muted">
+                Search donors and adjust record limits
+              </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col md:flex-row gap-4">
               <Input
@@ -189,7 +232,10 @@ export default function DonationBankAdminPage() {
                 onChange={(e) => setFilterDonor(e.target.value)}
                 className="md:max-w-sm"
               />
-              <Select value={String(limit)} onValueChange={(v) => setLimit(Number(v))}>
+              <Select
+                value={String(limit)}
+                onValueChange={(v) => setLimit(Number(v))}
+              >
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="Limit" />
                 </SelectTrigger>
@@ -199,28 +245,43 @@ export default function DonationBankAdminPage() {
                   <SelectItem value="250">250</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={fetchAll}>Apply</Button>
+              <Button onClick={fetchAll} className="md:w-auto w-full">
+                Apply
+              </Button>
             </CardContent>
           </Card>
 
-          {/* Top donors */}
-          <Card className="border-border bg-card mb-8">
+          {/* Top Donors */}
+          <Card className="border-border bg-card mb-10 shadow-sm hover:shadow-md transition-all">
             <CardHeader>
               <CardTitle className="text-foreground">Top Donors</CardTitle>
-              <CardDescription className="text-foreground-muted">Highest contributors by amount</CardDescription>
+              <CardDescription className="text-foreground-muted">
+                Highest contributors by total donations
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {stats.topDonors.length === 0 ? (
-                <div className="text-foreground-muted">No donations yet</div>
+                <div className="text-foreground-muted text-sm">
+                  No donations yet
+                </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {stats.topDonors.map((d) => (
-                    <div key={d.donorId} className="flex items-center justify-between p-3 border rounded-md">
+                    <div
+                      key={d.donorId}
+                      className="flex items-center justify-between p-3 border rounded-md hover:bg-muted/30 transition-colors"
+                    >
                       <div>
-                        <div className="font-medium text-foreground">{d.donor?.name || d.donor?.email || d.donorId}</div>
-                        <div className="text-xs text-foreground-muted">{d.count} transactions</div>
+                        <div className="font-medium text-foreground">
+                          {d.donor?.name || d.donor?.email || d.donorId}
+                        </div>
+                        <div className="text-xs text-foreground-muted">
+                          {d.count} transactions
+                        </div>
                       </div>
-                      <div className="font-semibold text-primary">${d.total.toLocaleString()}</div>
+                      <div className="font-semibold text-primary">
+                        ${d.total.toLocaleString()}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -228,18 +289,24 @@ export default function DonationBankAdminPage() {
             </CardContent>
           </Card>
 
-          {/* Transactions table */}
-          <Card className="border-border bg-card">
+          {/* Transactions */}
+          <Card className="border-border bg-card shadow-sm hover:shadow-md transition-all">
             <CardHeader>
-              <CardTitle className="text-foreground">All Transactions</CardTitle>
-              <CardDescription className="text-foreground-muted">Manage individual donation records</CardDescription>
+              <CardTitle className="text-foreground">
+                All Transactions
+              </CardTitle>
+              <CardDescription className="text-foreground-muted">
+                Review and update donation records
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {transactions.length === 0 ? (
-                <div className="text-foreground-muted">No transactions found.</div>
+                <div className="text-foreground-muted text-sm">
+                  No transactions found.
+                </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full text-sm border-collapse">
                     <thead>
                       <tr className="text-left text-foreground-muted border-b">
                         <th className="py-2 pr-4">Date</th>
@@ -252,30 +319,67 @@ export default function DonationBankAdminPage() {
                     </thead>
                     <tbody>
                       {transactions.map((t) => (
-                        <tr key={t._id} className="border-b last:border-b-0">
+                        <tr
+                          key={t._id}
+                          className="border-b last:border-b-0 hover:bg-muted/20 transition-colors"
+                        >
                           <td className="py-3 pr-4 text-foreground-muted">
                             {new Date(t.createdAt).toLocaleString()}
                           </td>
                           <td className="py-3 pr-4">
-                            <div className="font-medium text-foreground">{t.donor?.name || t.donor?.email || t.donorId}</div>
-                            <div className="text-xs text-foreground-muted">{t.donor?.email}</div>
+                            <div className="font-medium text-foreground">
+                              {t.donor?.name ||
+                                t.donor?.email ||
+                                t.donorId}
+                            </div>
+                            <div className="text-xs text-foreground-muted">
+                              {t.donor?.email}
+                            </div>
                           </td>
-                          <td className="py-3 pr-4 font-semibold text-primary">${t.amount.toLocaleString()}</td>
-                          <td className="py-3 pr-4"><Badge variant="secondary">{t.source}</Badge></td>
+                          <td className="py-3 pr-4 font-semibold text-primary">
+                            ${t.amount.toLocaleString()}
+                          </td>
                           <td className="py-3 pr-4">
-                            <Badge variant={t.status === "completed" ? "default" : t.status === "refunded" ? "destructive" : "secondary"}>
+                            <Badge variant="secondary">{t.source}</Badge>
+                          </td>
+                          <td className="py-3 pr-4">
+                            <Badge
+                              variant={
+                                t.status === "completed"
+                                  ? "default"
+                                  : t.status === "refunded"
+                                  ? "destructive"
+                                  : "secondary"
+                              }
+                            >
                               {t.status || "completed"}
                             </Badge>
                           </td>
                           <td className="py-3 pr-4">
-                            <Select onValueChange={(v) => handleUpdateStatus(t._id, v)}>
+                            <Select
+                              onValueChange={(v) =>
+                                handleUpdateStatus(t._id, v)
+                              }
+                            >
                               <SelectTrigger className="w-36">
-                                <SelectValue placeholder={updatingId === t._id ? "Updating..." : "Change status"} />
+                                <SelectValue
+                                  placeholder={
+                                    updatingId === t._id
+                                      ? "Updating..."
+                                      : "Change status"
+                                  }
+                                />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="completed">Completed</SelectItem>
-                                <SelectItem value="flagged">Flagged</SelectItem>
-                                <SelectItem value="refunded">Refunded</SelectItem>
+                                <SelectItem value="completed">
+                                  Completed
+                                </SelectItem>
+                                <SelectItem value="flagged">
+                                  Flagged
+                                </SelectItem>
+                                <SelectItem value="refunded">
+                                  Refunded
+                                </SelectItem>
                               </SelectContent>
                             </Select>
                           </td>

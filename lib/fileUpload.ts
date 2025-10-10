@@ -1,132 +1,116 @@
-import { writeFile, mkdir, unlink } from 'fs/promises';
-import { join } from 'path';
-import { randomUUID } from 'crypto';
+import { S3Client } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
+import { randomUUID } from "crypto";
+import path from "path";
 
 export interface FileUploadResult {
   success: boolean;
-  filePath?: string;
+  fileUrl?: string;
+  fileKey?: string;
   fileName?: string;
   error?: string;
 }
 
+const s3 = new S3Client({
+  region: process.env.AWS_REGION!,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
+
 export class FileUploadManager {
-  private baseUploadPath: string;
-
-  constructor() {
-    this.baseUploadPath = join(process.cwd(), 'public', 'uploads');
-  }
-
   /**
-   * Upload a file to the specified directory
-   * @param file - The file to upload
-   * @param studentId - Student ID for folder organization
-   * @param documentType - Type of document (academicTranscript, marksheets, etc.)
-   * @returns Upload result with file path
+   * Upload a single file to S3
    */
   async uploadFile(
-    file: File, 
-    studentId: string, 
+    file: File,
+    studentId: string,
     documentType: string
   ): Promise<FileUploadResult> {
     try {
-      // Validate file size (5MB max)
-      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      // ✅ Validate size (5MB)
+      const maxSize = 5 * 1024 * 1024;
       if (file.size > maxSize) {
         return {
           success: false,
-          error: `File size exceeds 5MB limit. Current size: ${Math.round(file.size / 1024 / 1024)}MB`
+          error: `File size exceeds 5MB. Current: ${Math.round(file.size / 1024 / 1024)}MB`,
         };
       }
 
-      // Validate file type
-      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+      // ✅ Validate type
+      const allowedTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
       if (!allowedTypes.includes(file.type)) {
         return {
           success: false,
-          error: `Invalid file type. Allowed types: PDF, JPG, JPEG, PNG`
+          error: "Invalid file type. Allowed: PDF, JPG, JPEG, PNG",
         };
       }
 
-      // Generate unique filename
-      const fileExtension = this.getFileExtension(file.name);
-      const uniqueFileName = `${documentType}_${Date.now()}_${randomUUID()}${fileExtension}`;
-      
-      // Create student-specific directory
-      const studentDir = join(this.baseUploadPath, 'documents', 'students', studentId);
-      await mkdir(studentDir, { recursive: true });
+      // ✅ Unique S3 key (path in bucket)
+      const fileExt = this.getFileExtension(file.name);
+      const uniqueName = `${documentType}_${Date.now()}_${randomUUID()}${fileExt}`;
+      const key = `documents/students/${studentId}/${uniqueName}`;
 
-      // Save file
-      const filePath = join(studentDir, uniqueFileName);
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      
-      await writeFile(filePath, buffer);
+      // ✅ Convert file to buffer
+      const buffer = Buffer.from(await file.arrayBuffer());
 
-      // Return relative path for database storage
-      const relativePath = `/uploads/documents/students/${studentId}/${uniqueFileName}`;
+      // ✅ Upload to S3
+      const upload = new Upload({
+        client: s3,
+        params: {
+          Bucket: process.env.AWS_S3_BUCKET!,
+          Key: key,
+          Body: buffer,
+          ContentType: file.type,
+        },
+      });
+
+      await upload.done();
+
+      // ✅ Generate file URL
+      const fileUrl = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 
       return {
         success: true,
-        filePath: relativePath,
-        fileName: uniqueFileName
+        fileUrl,
+        fileKey: key,
+        fileName: uniqueName,
       };
-
     } catch (error) {
-      console.error('File upload error:', error);
+      console.error("S3 Upload Error:", error);
       return {
         success: false,
-        error: 'Failed to upload file. Please try again.'
+        error: "Failed to upload file to S3.",
       };
     }
   }
 
   /**
-   * Upload multiple files for a student request
-   * @param files - Object containing files to upload
-   * @param studentId - Student ID
-   * @returns Object with upload results for each file
+   * Upload multiple files
    */
   async uploadMultipleFiles(
     files: Record<string, File | null>,
     studentId: string
   ): Promise<Record<string, FileUploadResult>> {
     const results: Record<string, FileUploadResult> = {};
-
-    for (const [documentType, file] of Object.entries(files)) {
-      if (file) {
-        results[documentType] = await this.uploadFile(file, studentId, documentType);
-      } else {
-        results[documentType] = {
-          success: false,
-          error: 'No file provided'
-        };
-      }
+    for (const [docType, file] of Object.entries(files)) {
+      results[docType] = file
+        ? await this.uploadFile(file, studentId, docType)
+        : { success: false, error: "No file provided" };
     }
-
     return results;
   }
 
   /**
-   * Get file extension from filename
-   * @param filename - Original filename
-   * @returns File extension with dot
-   */
-  private getFileExtension(filename: string): string {
-    const lastDotIndex = filename.lastIndexOf('.');
-    return lastDotIndex > -1 ? filename.substring(lastDotIndex) : '';
-  }
-
-  /**
-   * Generate file metadata for database storage
-   * @param file - Original file
-   * @param uploadResult - Upload result
-   * @returns Metadata object
+   * Generate file metadata for DB
    */
   static generateFileMetadata(file: File, uploadResult: FileUploadResult) {
     return {
       originalName: file.name,
       fileName: uploadResult.fileName,
-      filePath: uploadResult.filePath,
+      fileUrl: uploadResult.fileUrl,
+      fileKey: uploadResult.fileKey,
       fileSize: file.size,
       fileType: file.type,
       uploadedAt: new Date(),
@@ -134,46 +118,29 @@ export class FileUploadManager {
   }
 
   /**
-   * Delete a specific file from the uploads directory
-   * @param studentId - Student ID
-   * @param fileName - Name of the file to delete
-   * @returns Deletion result
+   * Delete a file from S3
    */
-  async deleteFile(studentId: string, fileName: string): Promise<{ success: boolean; error?: string }> {
+  async deleteFile(fileKey: string): Promise<{ success: boolean; error?: string }> {
+    const { DeleteObjectCommand } = await import("@aws-sdk/client-s3");
     try {
-      const filePath = join(this.baseUploadPath, 'documents', 'students', studentId, fileName);
-      await unlink(filePath);
+      const command = new DeleteObjectCommand({
+        Bucket: process.env.AWS_S3_BUCKET!,
+        Key: fileKey,
+      });
+      await s3.send(command);
       return { success: true };
     } catch (error) {
-      console.error(`Failed to delete file ${fileName} for student ${studentId}:`, error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
-      };
+      console.error("Failed to delete from S3:", error);
+      return { success: false, error: "Error deleting file from S3" };
     }
   }
 
   /**
-   * Delete multiple files for a student
-   * @param studentId - Student ID
-   * @param documents - Document metadata object
-   * @returns Array of deletion results
+   * Get file extension
    */
-  async deleteMultipleFiles(
-    studentId: string, 
-    documents: Record<string, any>
-  ): Promise<Record<string, { success: boolean; error?: string }>> {
-    const results: Record<string, { success: boolean; error?: string }> = {};
-
-    for (const [docType, docInfo] of Object.entries(documents)) {
-      if (docInfo && typeof docInfo === 'object' && (docInfo as any).fileName) {
-        results[docType] = await this.deleteFile(studentId, (docInfo as any).fileName);
-      } else {
-        results[docType] = { success: false, error: 'No filename found' };
-      }
-    }
-
-    return results;
+  private getFileExtension(filename: string): string {
+    const idx = filename.lastIndexOf(".");
+    return idx > -1 ? filename.substring(idx) : "";
   }
 }
 

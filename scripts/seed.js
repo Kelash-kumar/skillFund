@@ -14,7 +14,7 @@ const { MongoClient, ObjectId } = require("mongodb");
 const bcrypt = require("bcryptjs");
 
 const DB_NAME = "skillfund"; // Keep consistent with lib/mongodb.ts
-const MONGODB_URI  = "mongodb+srv://kelashraisal_db_user:IDXX84Pd5ib19j1R@cluster0.7umhbjx.mongodb.net/"
+const MONGODB_URI  = "mongodb+srv://metromerge52_db_user:fqGpKnatSlmVXkb2@cluster0.cjsy67a.mongodb.net/"
 async function upsertOne(collection, filter, doc) {
   const res = await collection.updateOne(filter, { $setOnInsert: doc }, { upsert: true });
   if (res.upsertedId && res.upsertedId._id) {

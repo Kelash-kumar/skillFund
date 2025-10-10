@@ -1,92 +1,105 @@
-"use client"
+"use client";
 
-import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { BookOpen, Heart, Users, TrendingUp, DollarSign, Award, Target, Gift, Star, ArrowRight } from "lucide-react"
-import Link from "next/link"
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  DollarSign,
+  Gift,
+  Heart,
+  Users,
+  Award,
+} from "lucide-react";
+import Link from "next/link";
+
+// ✅ Charts
+import {
+  Line,
+  Doughnut,
+} from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface DonationStats {
-  totalDonated: number
-  studentsSupported: number
-  coursesCompleted: number
-  activeSponsorship: number
+  totalDonated: number;
+  studentsSupported: number;
+  coursesCompleted: number;
+  activeSponsorship: number;
 }
 
 interface RecentDonation {
-  _id: string
-  studentName: string
-  courseTitle: string
-  amount: number
-  status: string
-  createdAt: string
-}
-
-interface SponsoredStudent {
-  _id: string
-  studentName: string
-  courseTitle: string
-  progress: number
-  totalAmount: number
-  fundedAmount: number
+  _id: string;
+  studentName: string;
+  courseTitle: string;
+  amount: number;
+  status: string;
+  createdAt: string;
 }
 
 export default function DonorDashboard() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [stats, setStats] = useState<DonationStats>({
     totalDonated: 0,
     studentsSupported: 0,
     coursesCompleted: 0,
     activeSponsorship: 0,
-  })
-  const [recentDonations, setRecentDonations] = useState<RecentDonation[]>([])
-  const [sponsoredStudents, setSponsoredStudents] = useState<SponsoredStudent[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  });
+  const [recentDonations, setRecentDonations] = useState<RecentDonation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (status === "loading") return
-
+    if (status === "loading") return;
     if (!session || session.user?.userType !== "donor") {
-      router.push("/auth/signin")
-      return
+      router.push("/auth/signin");
+      return;
     }
-
-    fetchDashboardData()
-  }, [session, status, router])
+    fetchDashboardData();
+  }, [session, status, router]);
 
   const fetchDashboardData = async () => {
     try {
-      const [statsRes, donationsRes, studentsRes] = await Promise.all([
+      const [statsRes, donationsRes] = await Promise.all([
         fetch("/api/donor/stats"),
         fetch("/api/donor/donations"),
-        fetch("/api/donor/sponsored-students"),
-      ])
-
-      if (statsRes.ok) {
-        const statsData = await statsRes.json()
-        setStats(statsData)
-      }
-
-      if (donationsRes.ok) {
-        const donationsData = await donationsRes.json()
-        setRecentDonations(donationsData)
-      }
-
-      if (studentsRes.ok) {
-        const studentsData = await studentsRes.json()
-        setSponsoredStudents(studentsData)
-      }
+      ]);
+      if (statsRes.ok) setStats(await statsRes.json());
+      if (donationsRes.ok) setRecentDonations(await donationsRes.json());
     } catch (error) {
-      console.error("Error fetching dashboard data:", error)
+      console.error("Error fetching data:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   if (status === "loading" || isLoading) {
     return (
@@ -96,107 +109,90 @@ export default function DonorDashboard() {
           <p className="text-foreground-muted">Loading your dashboard...</p>
         </div>
       </div>
-    )
+    );
   }
 
+  // --- Graph Data ---
+  const lineData = {
+    labels: recentDonations.slice(0, 7).map((d) =>
+      new Date(d.createdAt).toLocaleDateString()
+    ),
+    datasets: [
+      {
+        label: "Donations Over Time",
+        data: recentDonations.slice(0, 7).map((d) => d.amount),
+        borderColor: "#10b981",
+        backgroundColor: "rgba(16, 185, 129, 0.2)",
+        tension: 0.4,
+        fill: true,
+        pointRadius: 4,
+      },
+    ],
+  };
+
+  const doughnutData = {
+    labels: ["Education", "Technology", "Scholarships", "Other"],
+    datasets: [
+      {
+        data: [45, 25, 20, 10],
+        backgroundColor: [
+          "rgba(16, 185, 129, 0.7)",
+          "rgba(52, 211, 153, 0.7)",
+          "rgba(34, 197, 94, 0.7)",
+          "rgba(134, 239, 172, 0.7)",
+        ],
+        borderWidth: 2,
+      },
+    ],
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Link href="/" className="flex items-center space-x-2">
-              <BookOpen className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold text-foreground">SkillFund</span>
-            </Link>
-          </div>
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link href="/donor/donations" className="text-foreground-muted hover:text-foreground transition-colors">
-              My Donations
-            </Link>
-            <Link href="/profile" className="text-foreground-muted hover:text-foreground transition-colors">
-              Profile
-            </Link>
-          </nav>
-          <div className="flex items-center space-x-3">
-            <span className="text-sm text-foreground-muted">Welcome, {session?.user?.name}</span>
-            <Button variant="outline" onClick={() => router.push("/api/auth/signout")}>
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-background to-background/90 dark:from-background dark:to-background">
+      <div className="container mx-auto px-4 py-10">
         {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Welcome back, {session?.user?.name}!</h1>
-          <p className="text-xl text-foreground-muted">Thank you for empowering students through education funding</p>
+        <div className="mb-10 text-center">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-foreground mb-3">
+            Welcome back, {session?.user?.name} 🌱
+          </h1>
+          <p className="text-lg text-foreground-muted max-w-2xl mx-auto">
+            Thank you for empowering students through your generosity — your
+            support fuels brighter futures.
+          </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="border-border bg-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-foreground-muted">Total Donated</CardTitle>
-              <DollarSign className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">${stats.totalDonated.toLocaleString()}</div>
-            </CardContent>
-          </Card>
-          <Card className="border-border bg-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-foreground-muted">Students Supported</CardTitle>
-              <Users className="h-4 w-4 text-foreground-muted" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{stats.studentsSupported}</div>
-            </CardContent>
-          </Card>
-          <Card className="border-border bg-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-foreground-muted">Certifications Earned</CardTitle>
-              <Award className="h-4 w-4 text-accent" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{stats.coursesCompleted}</div>
-            </CardContent>
-          </Card>
-          <Card className="border-border bg-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-foreground-muted">Active Sponsorships</CardTitle>
-              <Gift className="h-4 w-4 text-secondary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{stats.activeSponsorship}</div>
-            </CardContent>
-          </Card>
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+          <StatCard title="Total Donated" icon={DollarSign} color="emerald" value={`$${stats.totalDonated.toLocaleString()}`} />
+          <StatCard title="Students Supported" icon={Users} color="green" value={stats.studentsSupported} />
+          <StatCard title="Certifications Earned" icon={Award} color="yellow" value={stats.coursesCompleted} />
+          <StatCard title="Active Sponsorships" icon={Gift} color="teal" value={stats.activeSponsorship} />
         </div>
 
-     
-
+        {/* Content with Graphs */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
           {/* Recent Donations */}
-          <Card className="border-border bg-card">
+          <Card className="border border-emerald-100 dark:border-border bg-card/60 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
             <CardHeader>
-              <CardTitle className="text-foreground flex items-center">
-                <Gift className="h-5 w-5 mr-2" />
+              <CardTitle className="text-foreground flex items-center gap-2">
+                <Gift className="h-5 w-5 text-emerald-600" />
                 Recent Donations
               </CardTitle>
-              <CardDescription className="text-foreground-muted">
-                Your latest contributions to student funding
-              </CardDescription>
+              <CardDescription>Your latest contributions to student funding</CardDescription>
             </CardHeader>
             <CardContent>
               {recentDonations.length === 0 ? (
-                <div className="text-center py-8">
-                  <Gift className="h-12 w-12 text-foreground-muted mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-foreground mb-2">No donations yet</h3>
-                  <p className="text-foreground-muted mb-4">Make your first donation to support a student</p>
+                <div className="text-center py-10">
+                  <Gift className="h-12 w-12 text-emerald-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    No donations yet
+                  </h3>
+                  <p className="text-foreground-muted mb-6">
+                    Make your first donation to support a student’s journey
+                  </p>
                   <Link href="/donor/donate">
-                    <Button className="bg-green-500 hover:bg-secondary-hover">Make a Donation</Button>
+                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                      Make a Donation
+                    </Button>
                   </Link>
                 </div>
               ) : (
@@ -204,43 +200,91 @@ export default function DonorDashboard() {
                   {recentDonations.slice(0, 5).map((donation) => (
                     <div
                       key={donation._id}
-                      className="flex items-center justify-between p-4 border border-border rounded-lg bg-background-muted"
+                      className="flex items-center justify-between p-4 border rounded-lg bg-gradient-to-r from-emerald-50/40 to-transparent dark:from-card hover:shadow-sm"
                     >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                          <DollarSign className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-foreground">{donation.studentName}</h4>
-                          <p className="text-sm text-foreground-muted">{donation.courseTitle}</p>
-                          <p className="text-xs text-foreground-muted">
-                            {new Date(donation.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
+                      <div>
+                        <h4 className="font-semibold text-foreground">
+                          {donation.studentName}
+                        </h4>
+                        <p className="text-sm text-foreground-muted">
+                          {donation.courseTitle}
+                        </p>
+                        <p className="text-xs text-foreground-muted">
+                          {new Date(donation.createdAt).toLocaleDateString()}
+                        </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-primary">${donation.amount.toLocaleString()}</p>
-                        <Badge variant={donation.status === "completed" ? "default" : "secondary"} className="text-xs">
+                        <p className="font-semibold text-emerald-700">
+                          ${donation.amount.toLocaleString()}
+                        </p>
+                        <Badge variant="outline" className="text-xs">
                           {donation.status}
                         </Badge>
                       </div>
                     </div>
                   ))}
-                  {recentDonations.length > 5 && (
-                    <div className="text-center pt-4">
-                      <Link href="/donor/donations">
-                        <Button variant="outline">View All Donations</Button>
-                      </Link>
-                    </div>
-                  )}
                 </div>
               )}
             </CardContent>
           </Card>
-        </div>
 
-      
+          {/* Charts Section */}
+          <div className="space-y-6">
+            {/* Line Chart */}
+            <Card className="border border-emerald-100 dark:border-border bg-card/60 hover:shadow-lg transition-all">
+              <CardHeader>
+                <CardTitle className="text-foreground flex items-center gap-2">
+                  <Heart className="h-5 w-5 text-emerald-600" />
+                  Donation Trends
+                </CardTitle>
+                <CardDescription>Track your donations over time</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Line data={lineData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+              </CardContent>
+            </Card>
+
+            {/* Doughnut Chart */}
+            <Card className="border border-emerald-100 dark:border-border bg-card/60 hover:shadow-lg transition-all">
+              <CardHeader>
+                <CardTitle className="text-foreground flex items-center gap-2">
+                  <Users className="h-5 w-5 text-emerald-600" />
+                  Sponsorship Breakdown
+                </CardTitle>
+                <CardDescription>How your donations are distributed</CardDescription>
+              </CardHeader>
+              <CardContent className="flex justify-center">
+                <div className="w-64">
+                  <Doughnut data={doughnutData} />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
-  )
+  );
+}
+
+// ✅ Reusable StatCard Component
+function StatCard({ title, icon: Icon, color, value }: any) {
+  const colorMap: Record<string, string> = {
+    emerald: "from-emerald-50 text-emerald-700",
+    green: "from-green-50 text-green-700",
+    yellow: "from-yellow-50 text-yellow-700",
+    teal: "from-teal-50 text-teal-700",
+  };
+  return (
+    <Card className={`border border-${color}-100 bg-gradient-to-br ${colorMap[color]} hover:shadow-md`}>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className={`text-sm font-medium text-${color}-700`}>
+          {title}
+        </CardTitle>
+        <Icon className={`h-5 w-5 text-${color}-600`} />
+      </CardHeader>
+      <CardContent>
+        <div className="text-3xl font-bold text-foreground">{value}</div>
+      </CardContent>
+    </Card>
+  );
 }
